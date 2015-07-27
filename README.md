@@ -1,2 +1,2 @@
-# uGovernor
-utorrent cli
+# µGoverner
+µTorrent cli
