@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace uGovernor
 {
@@ -9,11 +10,13 @@ namespace uGovernor
             if (args == null || args.Length == 0)
             {
                 Trace.TraceError("No startup arguments supplied.", args);
-                return;
+                Environment.Exit(1);
             }
-
-            var governor = new Governor(args);
-            governor.Run();
+            else
+            {
+                var governor = new Governor(args);
+                governor.Run();
+            }
         }
     }
 }

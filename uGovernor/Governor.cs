@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Security;
 
 namespace uGovernor
@@ -8,6 +9,7 @@ namespace uGovernor
     class Governor
     {
         public bool AllTorrents { get; private set; }
+        public bool Debug { get; private set; }
         public string Hash { get; private set; }
         public TorrentServer Server { get; private set; }
         public IEnumerable<string> Actions { get; private set; }
@@ -17,13 +19,17 @@ namespace uGovernor
         -user xxx
         -password xxx
         -hash xxxxx
-        -all (ignores hash)
+        -all (ignores hash, also implied if no hash supplied)
         -noTokenAuth
-        -start
-        -stop
-        -force
-        -remove
-        -removeData
+        -debug (writes to debug.log)
+        -start[_ifprivate|_ifpublic]
+        -stop[_ifprivate|_ifpublic]
+        -forcestart[_ifprivate|_ifpublic]
+        -unpause[_ifprivate|_ifpublic]
+        -pause[_ifprivate|_ifpublic]
+        -recheck[_ifprivate|_ifpublic]
+        -remove[_ifprivate|_ifpublic]
+        -removeData[_ifprivate|_ifpublic]
         -add (uses magnet)
         -addResolved (uses torcache)
         */
@@ -68,10 +74,20 @@ namespace uGovernor
                         useToken = false;
                         break;
 
+                    case "DEBUG":
+                        Debug = true;
+                        break;
+
                     default:
                         actions.Add(name);
                         break;
                 }
+            }
+
+            if (Debug)
+            {
+                var listener = new TextWriterTraceListener("debug.log");
+                Trace.Listeners.Add(listener);
             }
             
             if (user == null || password == null)
@@ -87,7 +103,7 @@ namespace uGovernor
         {
             IEnumerable<Torrent> torrents;
 
-            if (AllTorrents)
+            if (AllTorrents || Hash == null)
             {
                 torrents = Server.GetAllTorrents();
             }
@@ -99,42 +115,37 @@ namespace uGovernor
                 };
             }
 
+            const string IFPRIVATE = "_IFPRIVATE";
+            const string IFPUBLIC = "_IFPUBLIC";
 
-            foreach (var torrent in torrents)
-                foreach (var action in Actions)
+            foreach (var action in Actions)
+            {
+                string command;
+                
+                Execution execution;
+                if (action.EndsWith(IFPRIVATE, StringComparison.OrdinalIgnoreCase))
                 {
-                    Trace.TraceInformation("Executing {0}...", action);
-                    switch (action)
-                    {
-                        case "START":
-                            torrent.Start();
-                            break;
-                        case "STOP":
-                            torrent.Stop();
-                            break;
-                        case "REMOVE":
-                            torrent.Remove();
-                            break;
-                        case "REMOVEDATA":
-                            torrent.RemoveData();
-                            break;
-                        case "FORCE":
-                            torrent.Force();
-                            break;
-                        case "ADD":
-                            torrent.Add(true);
-                            break;
-                        case "ADDRESOLVED":
-                            torrent.Add(false);
-                            break;
-
-
-
-                        default:
-                            Trace.TraceError("Unknown action: {0}", action);
-                            break;
-                    }
+                    command = action.Substring(0, action.Length - IFPRIVATE.Length);
+                    execution = Execution.Private;
                 }
+                else if (action.EndsWith(IFPUBLIC, StringComparison.OrdinalIgnoreCase))
+                {
+                    command = action.Substring(0, action.Length - IFPUBLIC.Length);
+                    execution = Execution.Public;
+                }
+                else
+                {
+                    command = action;
+                    execution = Execution.Always;
+                }
+
+                foreach (var torrent in torrents)
+                {
+                    Trace.TraceInformation($"Executing {action}...");
+                    torrent.Execute(command, execution);
+                }
+            }
         }
+
     }
 }

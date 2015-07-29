@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Security;
 using System.Text.RegularExpressions;
@@ -16,19 +18,20 @@ namespace uGovernor
         public Uri Host { get; private set; }
 
         string _token;
+        JavaScriptSerializer _serializer;
 
         string Token
         {
             get
             {
-                if (_token == null)
+                if (_token == null && _useTokenAuth)
                 {
                     using (var client = CreateService())
                     {
                         var uri = new Uri(Host, "/gui/token.html");
                         var answer = client.DownloadString(uri);
                         
-                        var tokenRegex = new Regex(@"<div id=""token"".*?>(?<token>.*+)</div>", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.CultureInvariant);
+                        var tokenRegex = new Regex("<div id=[\"']token['\"].*?>(?<token>.+)</div>", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.CultureInvariant);
                         var match = tokenRegex.Match(answer);
                         if (match.Success)
                         {
@@ -55,6 +58,8 @@ namespace uGovernor
             _username = username;
             _password = password;
             _useTokenAuth = useTokenAuth;
+
+            _serializer = new JavaScriptSerializer();
         }
 
         public Torrent GetTorrent(string hash)
@@ -66,11 +71,16 @@ namespace uGovernor
 
         internal IEnumerable<Torrent> GetAllTorrents()
         {
-            var reply = Do("list=1");
-            var torrents = reply.torrents;
+            var reply = Execute("1", "list");
+                        
+            var json = _serializer.Deserialize<Dictionary<string, object>>(reply);
+            var torrents = ((ArrayList)json["torrents"])
+                                        .Cast<ArrayList>()
+                                        .Select(x => (string)x[0]/* first index == hash */)
+                                        .Select(x => new Torrent(this, x))
+                                        .ToArray();
 
-
-            throw new NotImplementedException();
+            return torrents;
         }
 
         WebClient CreateService()
@@ -79,29 +89,30 @@ namespace uGovernor
             client.Credentials = new NetworkCredential(_username, _password);
             return client;
         }
+        
 
-
-
-        internal dynamic Do(string action, bool expectsReply = true)
+        internal string Execute(string action, string actionPrefix = "action")
         {
+            if (action == null) throw new ArgumentNullException(nameof(action));
+            if (actionPrefix == null) throw new ArgumentNullException(nameof(actionPrefix));
+            
             if (_useTokenAuth)
             {
-                action += "&token=" + Token;
+                action = $"token={Token}&{actionPrefix}={action}";
             }
-
+            else
+            {
+                action = $"{actionPrefix}={action}";
+            }
+            
             string reply;
             using (var client = CreateService())
             {
-                var uri = new Uri(Host, action);
+                var uri = new Uri(Host, "/gui/?" + action);
                 reply = client.DownloadString(uri);
             }
 
-            if (!expectsReply) return null;
-
-            var serializer = new JavaScriptSerializer();
-            dynamic json = serializer.DeserializeObject(reply);
-
-            return json;
+            return reply;
         }
     }
 }
