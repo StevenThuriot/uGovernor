@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Security;
+
 
 namespace uGovernor
 {
@@ -55,11 +55,7 @@ namespace uGovernor
                         break;
 
                     case "PASSWORD":
-                        var pass = args[++i];
-                        password = new SecureString();
-
-                        foreach (var @char in pass)
-                            password.AppendChar(@char);
+                        password = args[++i].ToSecureString();
                         break;
 
                     case "HASH":
@@ -90,9 +86,13 @@ namespace uGovernor
                 Trace.Listeners.Add(listener);
             }
             
-            if (user == null || password == null)
+            if (user == null || password == null || host == null)
             {
-                //TODO: Try retrieving from configuration manager instead;
+                var settings = new SettingsManger();
+
+                if (user == null) user = settings.Get("user");
+                if (password == null) password = settings.GetSecure("password");
+                if (host == null) host = settings.GetUri("host");
             }
 
             Server = new TorrentServer(host, user, password, useToken);
