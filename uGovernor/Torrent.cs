@@ -151,5 +151,49 @@ namespace uGovernor
             
             return _server.Execute($"add-url&s={torrentUrl}");
         }
+
+        public void Execute(string command, Execution execution)
+        {
+            switch (command)
+            {
+                case "ADD":
+                    Add(true);
+                    return;
+
+                case "ADDRESOLVED":
+                    Add(false);
+                    return;
+            }
+
+            if (execution == Execution.Public && Private)
+            {
+                Trace.TraceInformation($"Skipping {command}: {Hash} is public...");
+                return;
+            }
+
+            if (execution == Execution.Private && !Private)
+            {
+                Trace.TraceInformation($"Skipping {command}: {Hash} is private...");
+                return;
+            }
+
+            switch (command)
+            {
+                case "START":
+                case "STOP":
+                case "REMOVE":
+                case "REMOVEDATA":
+                case "FORCESTART":
+                case "PAUSE":
+                case "UNPAUSE":
+                case "RECHECK":
+                    CallServer(command);
+                    break;
+
+                default:
+                    Trace.TraceError($"Unknown action: {command}");
+                    break;
+            }
+        }
     }
 }
