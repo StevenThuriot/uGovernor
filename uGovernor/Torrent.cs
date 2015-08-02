@@ -75,46 +75,60 @@ namespace uGovernor
 
             return torrentProperties;
         }
-
-
-        public void Start()
+        
+        public string Start()
         {
-            CallServer();
+            return CallServer();
         }
 
-        public void Stop()
+        public string Stop()
         {
-            CallServer();
+            return CallServer();
         }
 
-        public void Remove()
+        public string Remove()
         {
-            CallServer();
+            return CallServer();
         }
 
-        public void RemoveData()
+        public string RemoveData()
         {
-            CallServer();
+            return CallServer();
         }
 
-        public void ForceStart()
+        public string ForceStart()
         {
-            CallServer();
+            return CallServer();
         }
 
-        public void Pause()
+        public string Pause()
         {
-            CallServer();
+            return CallServer();
         }
 
-        public void Unpause()
+        public string Unpause()
         {
-            CallServer();
+            return CallServer();
         }
 
-        public void Recheck()
+        public string Recheck()
         {
-            CallServer();
+            return CallServer();
+        }
+
+        public string SetPrio(string prio)
+        {
+            return _server.Execute($"setprio&hash={Hash}&p={prio}");
+        }
+        
+        public string SetLabel(string value)
+        {
+            return SetProperty("label", value);
+        }
+
+        public string SetProperty(string property, string value)
+        {
+            return _server.Execute($"setprops&hash={Hash}&s={property}&v={value}");
         }
 
         string CallServer([CallerMemberName] string action = null)
@@ -122,12 +136,8 @@ namespace uGovernor
             return _server.Execute($"{action.ToLowerInvariant()}&hash={Hash}");
         }
 
-        public void SetPrio(string prio)
-        {
-            _server.Execute($"setprio&hash={Hash}&p={prio}");
-        }
 
-        public void Add(bool useMagnet)
+        public string Add(bool useMagnet)
         {
             string torrentUrl;
             if (useMagnet)
@@ -139,51 +149,7 @@ namespace uGovernor
                 torrentUrl = $"http://torcache.net/torrent/{Hash}.torrent";
             }
             
-            _server.Execute($"add-url&s={torrentUrl}");
-        }
-
-        public void Execute(string command, Execution execution)
-        {
-            switch (command)
-            {
-                case "ADD":
-                    Add(true);
-                    return;
-
-                case "ADDRESOLVED":
-                    Add(false);
-                    return;
-            }
-
-            if (execution == Execution.Public && Private)
-            {
-                Trace.TraceInformation($"Skipping {command}: {Hash} is public...");
-                return;
-            }
-
-            if (execution == Execution.Private && !Private)
-            {
-                Trace.TraceInformation($"Skipping {command}: {Hash} is private...");
-                return;
-            }
-
-            switch (command)
-            {
-                case "START":
-                case "STOP":
-                case "REMOVE":
-                case "REMOVEDATA":
-                case "FORCESTART":
-                case "PAUSE":
-                case "UNPAUSE":
-                case "RECHECK":
-                    CallServer(command);
-                    break;
-
-                default:
-                    Trace.TraceError($"Unknown action: {command}");
-                    break;
-            }
+            return _server.Execute($"add-url&s={torrentUrl}");
         }
     }
 }
