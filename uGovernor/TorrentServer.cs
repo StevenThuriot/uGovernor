@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Security;
@@ -69,9 +70,19 @@ namespace uGovernor
             return new Torrent(this, hash);
         }
 
+        public MultiTorrent GetMultiTorrent(params string[] hashes)
+        {
+            return GetMultiTorrent(hashes);
+        }
+
+        public MultiTorrent GetMultiTorrent(IEnumerable<string> hashes)
+        {
+            return new MultiTorrent(this, hashes);
+        }
+
         internal IEnumerable<Torrent> GetAllTorrents()
         {
-            var reply = Execute("1", "list");
+            var reply = Execute("list=1");
                         
             var json = _serializer.Deserialize<Dictionary<string, object>>(reply);
             var torrents = ((ArrayList)json["torrents"])
@@ -89,27 +100,30 @@ namespace uGovernor
             client.Credentials = new NetworkCredential(_username, _password);
             return client;
         }
-        
 
-        internal string Execute(string action, string actionPrefix = "action")
+
+
+        internal string ExecuteAction(string action)
+        {
+            return Execute($"action={action}");
+        }
+
+        internal string Execute(string action)
         {
             if (action == null) throw new ArgumentNullException(nameof(action));
-            if (actionPrefix == null) throw new ArgumentNullException(nameof(actionPrefix));
+            if (_useTokenAuth) action = $"token={Token}&{action}";
             
-            if (_useTokenAuth)
-            {
-                action = $"token={Token}&{actionPrefix}={action}";
-            }
-            else
-            {
-                action = $"{actionPrefix}={action}";
-            }
             
             string reply;
             using (var client = CreateService())
             {
+                Trace.TraceInformation($"Calling server: {action}");
+
                 var uri = new Uri(Host, "/gui/?" + action);
                 reply = client.DownloadString(uri);
+
+                if (reply == "invalid request")
+                    Trace.TraceError("Invalid request!");
             }
 
             return reply;

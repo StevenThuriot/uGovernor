@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Web.Script.Serialization;
 
@@ -116,84 +115,144 @@ namespace uGovernor
             return CallServer();
         }
 
-        public string SetPrio(string prio)
+        public virtual string SetPrio(string prio)
         {
-            return _server.Execute($"setprio&hash={Hash}&p={prio}");
+            return _server.ExecuteAction($"setprio&hash={Hash}&p={prio}");
         }
-        
+
         public string SetLabel(string value)
         {
             return SetProperty("label", value);
         }
 
-        public string SetProperty(string property, string value)
+        public string RemoveLabel()
         {
-            return _server.Execute($"setprops&hash={Hash}&s={property}&v={value}");
+            return SetProperty("label", "");
         }
 
-        string CallServer([CallerMemberName] string action = null)
+        public virtual string SetProperty(string property, string value)
         {
-            return _server.Execute($"{action.ToLowerInvariant()}&hash={Hash}");
+            return _server.ExecuteAction($"setprops&hash={Hash}&s={property}&v={value}");
+        }
+
+        public virtual string SetLabel(Execution execution, string value)
+        {
+            if (CanExecute(execution))
+                return SetLabel(value);
+
+            return null;
+        }
+
+        public virtual string RemoveLabel(Execution execution)
+        {
+            if (CanExecute(execution))
+                return RemoveLabel();
+
+            return null;
+        }
+
+        public virtual string SetPrio(Execution execution, string prio)
+        {
+            if (CanExecute(execution))
+                return SetPrio(prio);
+
+            return null;
+        }
+
+        public virtual string SetProperty(Execution execution, string property, string value)
+        {
+            if (CanExecute(execution))
+                return SetProperty(property, value);
+
+            return null;
+        }
+
+        protected virtual string CallServer([CallerMemberName] string action = null)
+        {
+            return _server.ExecuteAction($"{action.ToLowerInvariant()}&hash={Hash}");
         }
 
 
-        public string Add(bool useMagnet)
+
+
+
+        public virtual bool CanExecute(Execution execution)
         {
-            string torrentUrl;
-            if (useMagnet)
+            switch (execution)
             {
-                torrentUrl = $"magnet:?xt=urn:btih:{Hash}&amp;tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce&amp;tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce&amp;tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&amp;tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80%2Fannounce&amp;tr=udp%3A%2F%2Ftracker.publicbt.com%2Fannounce&amp;tr=udp%3A%2F%2Ftracker.openbittorrent.com%2Fannounce";
+                case Execution.Private:
+                    return Private;
+
+                case Execution.Public:
+                    return !Private;
+
+                default: return true;
             }
-            else
-            {
-                torrentUrl = $"http://torcache.net/torrent/{Hash}.torrent";
-            }
-            
-            return _server.Execute($"add-url&s={torrentUrl}");
         }
 
-        public void Execute(string command, Execution execution)
+
+        public virtual string ForceStart(Execution execution)
         {
-            switch (command)
-            {
-                case "ADD":
-                    Add(true);
-                    return;
+            if (CanExecute(execution))
+                return CallServer();
 
-                case "ADDRESOLVED":
-                    Add(false);
-                    return;
-            }
+            return null;
+        }
 
-            if (execution == Execution.Public && Private)
-            {
-                Trace.TraceInformation($"Skipping {command}: {Hash} is public...");
-                return;
-            }
+        public virtual string Pause(Execution execution)
+        {
+            if (CanExecute(execution))
+                return CallServer();
 
-            if (execution == Execution.Private && !Private)
-            {
-                Trace.TraceInformation($"Skipping {command}: {Hash} is private...");
-                return;
-            }
+            return null;
+        }
 
-            switch (command)
-            {
-                case "START":
-                case "STOP":
-                case "REMOVE":
-                case "REMOVEDATA":
-                case "FORCESTART":
-                case "PAUSE":
-                case "UNPAUSE":
-                case "RECHECK":
-                    CallServer(command);
-                    break;
+        public virtual string Recheck(Execution execution)
+        {
+            if (CanExecute(execution))
+                return CallServer();
 
-                default:
-                    Trace.TraceError($"Unknown action: {command}");
-                    break;
-            }
+            return null;
+        }
+
+        public virtual string Remove(Execution execution)
+        {
+            if (CanExecute(execution))
+                return CallServer();
+
+            return null;
+        }
+
+        public virtual string RemoveData(Execution execution)
+        {
+            if (CanExecute(execution))
+                return CallServer();
+
+            return null;
+        }
+
+        public virtual string Start(Execution execution)
+        {
+            if (CanExecute(execution))
+                return CallServer();
+
+            return null;
+        }
+
+        public virtual string Stop(Execution execution)
+        {
+            if (CanExecute(execution))
+                return CallServer();
+
+            return null;
+        }
+
+        public virtual string Unpause(Execution execution)
+        {
+            if (CanExecute(execution))
+                return CallServer();
+
+            return null;
         }
     }
 }
