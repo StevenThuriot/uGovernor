@@ -8,8 +8,6 @@ namespace uGovernor
     {
         public static void Main(string[] args)
         {
-            args = new string[] { "-start" };
-
             if (args == null || args.Length == 0)
             {
                 Trace.TraceError("No startup arguments supplied.", args);
