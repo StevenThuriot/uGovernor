@@ -2,11 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 
 namespace uGovernor
 {
-    public class Torrent
+    public class Torrent : IKnowAboutProperties
     {
         public string Hash { get; private set; }
 
@@ -21,32 +22,51 @@ namespace uGovernor
             _server = torrentServer;
             Hash = hash;
 
-            var properties = new Lazy<IReadOnlyDictionary<string, object>>(() => GetProps());
-            _private = new Lazy<bool>(() => (bool)properties.Value["Private"]);
-            _trackers = new Lazy<IEnumerable<string>>(() => (IEnumerable<string>)properties.Value["Trackers"]);
+            Lazy<IReadOnlyDictionary<string, object>> properties = new Lazy<IReadOnlyDictionary<string, object>>(() => GetProps());
         }
-        
-        Lazy<bool> _private;
+
+        bool IKnowAboutProperties.PropertiesAreSet
+        {
+            get { return _properties != null; }
+        }
+
+        void IKnowAboutProperties.SetProperties(IReadOnlyDictionary<string, object> properties)
+        {
+            _properties = properties;
+        }
+
+
+        IReadOnlyDictionary<string, object> _properties;
+        protected IReadOnlyDictionary<string, object> Properties
+        {
+            get
+            {
+                return _properties ?? (_properties = GetProps());
+            }
+        }
+
         public bool Private
         {
-            get { return _private.Value; }
+            get { return (bool)Properties["Private"]; }
         }
-
-        Lazy<IEnumerable<string>> _trackers;
+        
         public IEnumerable<string> Trackers
         {
-            get { return _trackers.Value; }
+            get { return (IEnumerable<string>)Properties["trackers"]; }
         }
-
-
-                
+      
         IReadOnlyDictionary<string, object> GetProps()
         {
             var result = CallServer();
+            var json = _propertyRegex.Match(result).Groups["properties"].Value;
+            return BuildPropertyDictionary(json);
+        }
 
+        protected static readonly Regex _propertyRegex = new Regex(@"""props"": \[(?<properties>.*?)\]", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        protected static IReadOnlyDictionary<string, object> BuildPropertyDictionary(string json)
+        {
             /*
-            {"build":25130,
-                "props": [{"hash": "678S4DF56S7DG56S7DG56S4DGS5G4SDG564G4564"
+            {"hash": "678S4DF56S7DG56S7DG56S4DGS5G4SDG564G4564"
                         ,"trackers": "http://tracker1/announce\r\nhttps://tracker2/announce\r\n"
                         ,"ulrate": 0
                         ,"dlrate": 0
@@ -57,24 +77,21 @@ namespace uGovernor
                         ,"seed_ratio": 1200
                         ,"seed_time": 0
                         ,"ulslots": 0
-                        }]
+                        }
                 }
 
             */
-
+            
             var serializer = new JavaScriptSerializer();
-            var json = serializer.Deserialize<Dictionary<string, object>>(result);
-            var props = (Dictionary<string, object>)((ArrayList)json["props"])[0];
+            var result = serializer.Deserialize<Dictionary<string, object>>(json);
 
-            var torrentProperties = new Dictionary<string, object>
-            {
-                { "Trackers", props["trackers"].ToString().Split(new [] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries) },
-                { "Private", props["dht"].Equals(-1) || props["pex"].Equals(-1) },
-            };
 
-            return torrentProperties;
+            result["trackers"] = result["trackers"].ToString().Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            result["Private"] = result["dht"].Equals(-1) || result["pex"].Equals(-1);
+
+            return result;
         }
-        
+
         public string Start()
         {
             return CallServer();

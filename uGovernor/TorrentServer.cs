@@ -70,14 +70,11 @@ namespace uGovernor
             return new Torrent(this, hash);
         }
 
-        public MultiTorrent GetMultiTorrent(params string[] hashes)
+        public IEnumerable<Torrent> GetTorrents(IEnumerable<string> hashes)
         {
-            return GetMultiTorrent(hashes);
-        }
+            if (hashes == null) throw new ArgumentNullException(nameof(hashes));
 
-        public MultiTorrent GetMultiTorrent(IEnumerable<string> hashes)
-        {
-            return new MultiTorrent(this, hashes);
+            return hashes.Select(hash => new Torrent(this, hash)).ToArray();
         }
 
         internal IEnumerable<Torrent> GetAllTorrents()
@@ -120,13 +117,17 @@ namespace uGovernor
                 Trace.TraceInformation($"Calling server: {action}");
 
                 var uri = new Uri(Host, "/gui/?" + action);
-                reply = client.DownloadString(uri);
-
-                if (reply == "invalid request")
+                try
+                {
+                    reply = client.DownloadString(uri);
+                    return reply;
+                }
+                catch (WebException)
+                {
                     Trace.TraceError("Invalid request!");
+                    return "";
+                }
             }
-
-            return reply;
         }
     }
 }

@@ -1,9 +1,21 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security;
 
 namespace uGovernor
 {
+    static class Extensions
+    {
+        public static IEnumerable<IEnumerable<T>> GroupPer<T>(this IEnumerable<T> source, int size)
+        {
+            return source.Select((Item, Index) => new { Item, Index })
+                         .GroupBy(x => x.Index / size, x => x.Item);
+        }
+    }
+
+
     unsafe static class UnsafeExtensions
     {
         public static SecureString ToSecureString(this string password)

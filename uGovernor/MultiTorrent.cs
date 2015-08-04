@@ -3,10 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
+using System.Web.Script.Serialization;
 
 namespace uGovernor
 {
-    public class MultiTorrent : Torrent, IEnumerable<Torrent>
+    public class MultiTorrent : Torrent, IReadOnlyList<Torrent>
     {
         IEnumerable<Torrent> _torrents;
         TorrentServer _server;
@@ -49,6 +51,29 @@ namespace uGovernor
         }
 
 
+        void EnsureProps()
+        {
+            var torrentList = _torrents.OfType<IKnowAboutProperties>().Where(x => !x.PropertiesAreSet).Cast<Torrent>().ToDictionary(x => x.Hash);
+
+            var result = CallServer(torrentList.Values, "GetProps");
+            
+            foreach (var json in _propertyRegex.Matches(result).Cast<Match>().Select(x => x.Groups["properties"]).Where(x => x.Success).Select(x => x.Value))
+            {
+                var properties = BuildPropertyDictionary(json);
+                var hash = properties["hash"].ToString();
+
+                Torrent torrent = torrentList[hash];
+                ((IKnowAboutProperties)torrent).SetProperties(properties);
+            }
+        }
+
+        IReadOnlyCollection<Torrent> GetExecutableTorrents(Execution execution)
+        {
+            EnsureProps();
+            return _torrents.Where(x => x.CanExecute(execution)).ToArray();
+        }
+
+
 
 
         public override string SetPrio(string prio)
@@ -58,8 +83,8 @@ namespace uGovernor
 
         public override string SetPrio(Execution execution, string prio)
         {
-            var torrents = _torrents.Where(x => x.CanExecute(execution)).ToArray();
-            if (torrents.Length == 0) return null;
+            var torrents = GetExecutableTorrents(execution);
+            if (torrents.Count == 0) return null;
 
             return SetPrio(torrents, prio);
         }
@@ -81,8 +106,8 @@ namespace uGovernor
 
         public override string SetProperty(Execution execution, string property, string value)
         {
-            var torrents = _torrents.Where(x => x.CanExecute(execution)).ToArray();
-            if (torrents.Length == 0) return null;
+            var torrents = GetExecutableTorrents(execution);
+            if (torrents.Count == 0) return null;
 
             return SetProperty(torrents, property, value);
         }
@@ -114,6 +139,22 @@ namespace uGovernor
             return GetEnumerator();
         }
 
+        public int Count
+        {
+            get
+            {
+                return _hashes.Length;
+            }
+        }
+
+        public Torrent this[int index]
+        {
+            get
+            {
+                return _torrents.ElementAt(index);
+            }
+        }
+
 
 
 
@@ -128,70 +169,70 @@ namespace uGovernor
 
         public override bool CanExecute(Execution execution)
         {
-            return _torrents.Any(x => x.CanExecute(execution));
+            return GetExecutableTorrents(execution).Any();
         }
 
 
         public override string ForceStart(Execution execution)
         {
-            var torrents = _torrents.Where(x => x.CanExecute(execution)).ToArray();
-            if (torrents.Length == 0) return null;
+            var torrents = GetExecutableTorrents(execution);
+            if (torrents.Count == 0) return null;
 
             return CallServer(torrents);
         }
 
         public override string Pause(Execution execution)
         {
-            var torrents = _torrents.Where(x => x.CanExecute(execution)).ToArray();
-            if (torrents.Length == 0) return null;
+            var torrents = GetExecutableTorrents(execution);
+            if (torrents.Count == 0) return null;
 
             return CallServer(torrents);
         }
 
         public override string Recheck(Execution execution)
         {
-            var torrents = _torrents.Where(x => x.CanExecute(execution)).ToArray();
-            if (torrents.Length == 0) return null;
+            var torrents = GetExecutableTorrents(execution);
+            if (torrents.Count == 0) return null;
 
             return CallServer(torrents);
         }
 
         public override string Remove(Execution execution)
         {
-            var torrents = _torrents.Where(x => x.CanExecute(execution)).ToArray();
-            if (torrents.Length == 0) return null;
+            var torrents = GetExecutableTorrents(execution);
+            if (torrents.Count == 0) return null;
 
             return CallServer(torrents);
         }
 
         public override string RemoveData(Execution execution)
         {
-            var torrents = _torrents.Where(x => x.CanExecute(execution)).ToArray();
-            if (torrents.Length == 0) return null;
+            var torrents = GetExecutableTorrents(execution);
+            if (torrents.Count == 0) return null;
 
             return CallServer(torrents);
         }
         
         public override string Start(Execution execution)
         {
-            var torrents = _torrents.Where(x => x.CanExecute(execution)).ToArray();
-            if (torrents.Length == 0) return null;
+            var torrents = GetExecutableTorrents(execution);
+            if (torrents.Count == 0) return null;
 
             return CallServer(torrents);
         }
 
         public override string Stop(Execution execution)
         {
-            var torrents = _torrents.Where(x => x.CanExecute(execution)).ToArray();
-            if (torrents.Length == 0) return null;
+            var torrents = GetExecutableTorrents(execution);
+            if (torrents.Count == 0) return null;
 
             return CallServer(torrents);
         }
 
         public override string Unpause(Execution execution)
         {
-            var torrents = _torrents.Where(x => x.CanExecute(execution)).ToArray();
-            if (torrents.Length == 0) return null;
+            var torrents = GetExecutableTorrents(execution);
+            if (torrents.Count == 0) return null;
 
             return CallServer(torrents);
         }

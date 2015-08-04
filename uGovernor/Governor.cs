@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Security;
 
 
@@ -10,8 +9,6 @@ namespace uGovernor
 {
     class Governor
     {
-        public bool AllTorrents { get; }
-        public bool Debug { get; }
         public TorrentServer Server { get; }
         public IEnumerable<Command> Actions { get; }
         public IEnumerable<AddCommand> AddActions { get; }
@@ -23,10 +20,10 @@ namespace uGovernor
         -password [VALUE]
 
         -hash [VALUE]
-        -all (ignores hash, also implied if no hash supplied)
         
         -noTokenAuth
-        -debug (writes to debug.log)
+        -debug (appends tracing to debug.log)
+        -ui (shows UI, will attach to parent if already in a console)
 
         -start[_ifprivate|_ifpublic]
         -stop[_ifprivate|_ifpublic]
@@ -40,6 +37,8 @@ namespace uGovernor
         -removeLabel[_ifprivate|_ifpublic]
         -setPrio[_ifprivate|_ifpublic] [VALUE]
         -setProperty[_ifprivate|_ifpublic] [NAME] [VALUE]
+
+        -save [NAME] [VALUE] [NAME2] [VALUE2] .... [NAME_N] [VALUE_N] (currently used: user, password and host)
 
         -add (uses magnet)
         -addResolved (uses torcache)
@@ -80,16 +79,8 @@ namespace uGovernor
                         hashes.Add(args[++i]);
                         break;
 
-                    case "ALL":
-                        AllTorrents = true;
-                        break;
-
                     case "NOTOKENAUTH":
                         useToken = false;
-                        break;
-
-                    case "DEBUG":
-                        Debug = true;
                         break;
 
                     case "ADD":
@@ -100,16 +91,21 @@ namespace uGovernor
                         addTorrents.Add(new AddCommand(args[++i], false));
                         break;
 
+                    case "DEBUG":
+                        var writerListener = new TextWriterTraceListener("debug.log");
+                        Trace.AutoFlush = true; //Otherwise nothing will be written to the file.
+                        Trace.Listeners.Add(writerListener);
+                        break;
+
+                    case "UI":
+                        //Ignore
+                        break;
+
+
                     default:
                         actions.Add(Command.Build(name, ref i, args));
                         break;
                 }
-            }
-
-            if (Debug)
-            {
-                var listener = new TextWriterTraceListener("debug.log");
-                Trace.Listeners.Add(listener);
             }
             
             if (user == null || password == null || host == null)
@@ -129,24 +125,27 @@ namespace uGovernor
 
         public void Run()
         {
+            if (!Actions.Any() && !AddActions.Any()) return; //Skip execution if no actions have been declared
+
+
             IEnumerable<Torrent> torrents;
 
-            if (AllTorrents || !Hashes.Any())
+            if (Hashes.Any())
             {
-                torrents = Server.GetAllTorrents();
+                torrents = Server.GetTorrents(Hashes);
             }
             else
             {
-                torrents = new Torrent[] {
-                    Server.GetMultiTorrent(Hashes)
-                };
+                Trace.TraceInformation("Retreiving all torrents;");
+                torrents = Server.GetAllTorrents();
+                Trace.TraceInformation($"Retrieved {torrents.Count()} torrents;");
             }
 
-            var multi = new MultiTorrent(Server, torrents);
-            foreach (var action in Actions)            
-                action.Run(multi);
+            foreach (var action in Actions)
+                foreach (var torrentGroup in torrents.GroupPer(30).Select(hashes => new MultiTorrent(Server, hashes)))
+                    action.Run(torrentGroup);
 
-            foreach (var action in AddActions)            
+            foreach (var action in AddActions)
                 action.Run(Server);
         }
     }

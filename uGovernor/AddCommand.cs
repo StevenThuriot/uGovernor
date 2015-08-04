@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace uGovernor
 {
@@ -28,6 +29,7 @@ namespace uGovernor
                 torrentUrl = $"http://torcache.net/torrent/{_hash}.torrent";
             }
 
+            Trace.TraceInformation($"Adding Torrent: {_hash}");
             server.ExecuteAction($"add-url&s={torrentUrl}");
         }
 
