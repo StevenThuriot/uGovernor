@@ -11,6 +11,7 @@ namespace uGovernor
     static class Security
     {
         const int _iterations = 1675;
+        const int keySize = sizeof(ushort);
 
         internal static string Encrypt(string text)
         {
@@ -33,18 +34,13 @@ namespace uGovernor
 
                 using (var memStream = new MemoryStream())
                 {
-                    var underscore = new byte[] { 95 };
-
-                    var bytes = BitConverter.GetBytes(salt.Length);
+                    //While a byte would suffice, we'll take the sure-thing and just use a ushort instead.
+                    var bytes = BitConverter.GetBytes((ushort)salt.Length);
                     memStream.Write(bytes, 0, bytes.Length);
 
-                    memStream.Write(underscore, 0, underscore.Length);
-
-                    bytes = BitConverter.GetBytes(aes.IV.Length);
+                    bytes = BitConverter.GetBytes((ushort)aes.IV.Length);
                     memStream.Write(bytes, 0, bytes.Length);
-
-                    memStream.Write(underscore, 0, underscore.Length);
-
+                    
                     memStream.Write(salt, 0, salt.Length);
                     memStream.Write(aes.IV, 0, aes.IV.Length);
 
@@ -64,26 +60,25 @@ namespace uGovernor
 
         internal static string Decrypt(string text)
         {
-            const int underscore = '_';
-
             var src = Convert.FromBase64String(text);
-            var saltArray = src.TakeWhile(x => x != underscore).ToArray();
-            var saltLength = BitConverter.ToInt32(saltArray, 0);
 
-            var leftover = src.Skip(saltArray.Length + 1).ToArray();
-            var ivArray = leftover.TakeWhile(x => x != underscore).ToArray();
-            var ivLength = BitConverter.ToInt32(ivArray, 0);
+            var saltArray = new byte[keySize];
+            Array.Copy(src, saltArray, keySize);
+            var saltLength = BitConverter.ToUInt16(saltArray, 0);
 
+            var ivArray = new byte[sizeof(ushort)];
+            Array.Copy(src, keySize, ivArray, 0, keySize);
+            var ivLength = BitConverter.ToUInt16(ivArray, 0);
 
-            leftover = leftover.Skip(ivArray.Length + 1).ToArray();
-            var salt = leftover.Take(saltLength).ToArray();
+            var salt = new byte[saltLength];
+            Array.Copy(src, keySize * 2, salt, 0, saltLength);
 
-            leftover = leftover.ToArray();
-            var iv = leftover.Skip(saltLength).Take(ivLength).ToArray();
+            var iv = new byte[ivLength];
+            var ivStartPosition = keySize * 2 + saltLength;
+            Array.Copy(src, ivStartPosition, iv, 0, ivLength);
 
-
-            var content = src.Skip(saltLength + ivLength + 2 + saltArray.Length + ivArray.Length).ToArray();
-
+            var content = new byte[src.Length - keySize * 2 - saltLength - ivLength];
+            Array.Copy(src, ivStartPosition + ivLength, content, 0, content.Length);
 
             using (var aes = new AesCryptoServiceProvider())
             {
