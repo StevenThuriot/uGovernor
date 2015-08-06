@@ -38,6 +38,8 @@ namespace uGovernor
             if (enableUI)
             {
                 var consoleListener = new ConsoleTraceListener();
+                consoleListener.TraceOutputOptions |= TraceOptions.DateTime | TraceOptions.Timestamp;
+
                 Trace.Listeners.Add(consoleListener);
             }
             

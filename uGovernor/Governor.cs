@@ -93,6 +93,7 @@ namespace uGovernor
 
                     case "DEBUG":
                         var writerListener = new TextWriterTraceListener("debug.log");
+                        writerListener.TraceOutputOptions |= TraceOptions.DateTime;
                         Trace.AutoFlush = true; //Otherwise nothing will be written to the file.
                         Trace.Listeners.Add(writerListener);
                         break;
