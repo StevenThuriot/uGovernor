@@ -19,7 +19,7 @@ namespace uGovernor
         -user [VALUE]
         -password [VALUE]
 
-        -hash [VALUE]
+        -hash [VALUE] (Can be used multiple times when using the same command on several hashes)
         
         -noTokenAuth
         -debug (appends tracing to debug.log)
