@@ -40,8 +40,8 @@ namespace uGovernor
 
         -save [NAME] [VALUE] [NAME2] [VALUE2] .... [NAME_N] [VALUE_N] (currently used: user, password and host)
 
-        -add (uses magnet)
-        -addResolved (uses torcache)
+        -add [HASH](uses magnet)
+        -addResolved [HASH] (uses torcache)
         */
         public Governor(string[] args)
         {
