@@ -105,7 +105,7 @@ Currently, only user, password and host are used.
 Add a torrent to the list by passing a hash. The torrent will be resolved using a magnet link.
 
 ##-addResolved [HASH]
-Add a torrent to the list by passing a hash. The torrent will be resolved using a torcache.
+Add a torrent to the list by passing a hash. The torrent will be resolved using torcache.
 
 
 # Private and Public Torrents
