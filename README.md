@@ -1,4 +1,4 @@
-# ![µGoverner](# ![µGoverner](https://cloud.githubusercontent.com/assets/544444/9152442/f85bddee-3e28-11e5-82b6-450eeb9028fe.png))
+# ![µGoverner](https://cloud.githubusercontent.com/assets/544444/9152442/f85bddee-3e28-11e5-82b6-450eeb9028fe.png)
 a µTorrent cli
 
 # Usage
