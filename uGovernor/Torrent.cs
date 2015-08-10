@@ -21,8 +21,6 @@ namespace uGovernor
 
             _server = torrentServer;
             Hash = hash;
-
-            Lazy<IReadOnlyDictionary<string, object>> properties = new Lazy<IReadOnlyDictionary<string, object>>(() => GetProps());
         }
 
         bool IKnowAboutProperties.PropertiesAreSet
