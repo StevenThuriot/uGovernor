@@ -16,5 +16,8 @@ namespace uGovernor
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool FreeConsole();
+
+        [DllImport("msvcrt.dll", EntryPoint = "memcpy", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        internal static extern IntPtr memcpy(IntPtr dest, IntPtr src, UIntPtr count);
     }
 }

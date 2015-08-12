@@ -3,8 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Management;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace uGovernor
 {
@@ -16,9 +14,7 @@ namespace uGovernor
         internal static string Encrypt(string text)
         {
             var salt = CreateSalt();
-
-            byte[] src = Encoding.Unicode.GetBytes(text);
-
+            
             using (var aes = new AesCryptoServiceProvider())
             {
                 aes.BlockSize = 128;
@@ -30,7 +26,6 @@ namespace uGovernor
                 aes.Padding = PaddingMode.PKCS7;
 
                 aes.GenerateIV();
-                var prefix = Encoding.ASCII.GetBytes($"{salt.Length}_{aes.IV.Length}_");
 
                 using (var memStream = new MemoryStream())
                 {
@@ -40,14 +35,30 @@ namespace uGovernor
 
                     bytes = BitConverter.GetBytes((ushort)aes.IV.Length);
                     memStream.Write(bytes, 0, bytes.Length);
-                    
+
                     memStream.Write(salt, 0, salt.Length);
                     memStream.Write(aes.IV, 0, aes.IV.Length);
 
                     using (ICryptoTransform encrypt = aes.CreateEncryptor())
                     using (var cryptoStream = new CryptoStream(memStream, encrypt, CryptoStreamMode.Write))
                     {
-                        cryptoStream.Write(src, 0, src.Length);
+
+                        var length = text.Length * sizeof(char);
+                        var @byte = new byte[length];
+
+                        unsafe
+                        {
+                            fixed (char* ptr = text)
+                            {
+
+                                fixed (byte* bytePtr = @byte)
+                                {
+                                    NativeMethods.memcpy(new IntPtr(bytePtr), new IntPtr(ptr), new UIntPtr((uint)length));
+                                }
+
+                                cryptoStream.Write(@byte, 0, length);
+                            }
+                        }
 
                         cryptoStream.FlushFinalBlock();
 
@@ -94,7 +105,17 @@ namespace uGovernor
                 using (ICryptoTransform decrypt = aes.CreateDecryptor())
                 {
                     byte[] dest = decrypt.TransformFinalBlock(content, 0, content.Length);
-                    return Encoding.Unicode.GetString(dest);
+
+                    unsafe
+                    {
+                        fixed (byte* b = dest)
+                        {
+                            var charPtr = (char*)b;
+                            var value = new string(charPtr, 0, dest.Length / sizeof(char));
+                            return value;
+                        }
+
+                    }
                 }
             }
         }
@@ -116,24 +137,26 @@ namespace uGovernor
 
         static Lazy<string> _fingerPrint = new Lazy<string>(() => 
         {
-            var cpu  = Task.Run(() => RunQuery("SELECT UniqueId, ProcessorId, Name, Description, Manufacturer FROM Win32_Processor"));
-            var mobo = Task.Run(() => RunQuery("SELECT Manufacturer, Product, Name, SerialNumber FROM Win32_BaseBoard"));
+            const string CPUQry = "SELECT UniqueId, ProcessorId, Name, Description, Manufacturer FROM Win32_Processor";
+            const string MoboQry = "SELECT Manufacturer, Product, Name, SerialNumber FROM Win32_BaseBoard";
             
-            return $"{cpu.Result}>>{mobo.Result}";
+            return $"{RunQuery(CPUQry, MoboQry)}";
         });
 
-        static string RunQuery(string query)
+        static string RunQuery(params string[] queries)
         {
-            var qry = new SelectQuery(query);
-            var searcher = new ManagementObjectSearcher(qry);
-            var result = searcher.Get();
+            var result = queries.AsParallel()
+                                .AsSequential()
+                                .Select(qry => new SelectQuery(qry))
+                                .Select(qry => new ManagementObjectSearcher(qry))
+                                .Select(searcher => searcher.Get())
+                                .Select(results => results.Cast<ManagementObject>()
+                                                          .SelectMany(x => x.Properties.Cast<PropertyData>())
+                                                          .Select(x => x.Value)
+                                                          .Where(x => x != null)
+                                                          .Aggregate("", (current, next) => current + next));
 
-            return result.Cast<ManagementObject>()
-                         .First().Properties
-                         .Cast<PropertyData>()
-                         .Select(x => x.Value)
-                         .Where(x => x != null)
-                         .Aggregate("", (current, next) => current + next);
+            return string.Join(">>", result);
         }
     }
 }
