@@ -63,7 +63,8 @@ Shows a console UI. When started from a console, it will attach to parent instea
 
 ##-list[public|private]
 List all torrents and their hashes. A filter can be used (public or private). The filter is optional. Not supplying it will result in all torrents being printed.
-When -ui is not supplied, it will try to open a UI or attach to a parent UI anyway.
+
+When `-ui` is not supplied, it will try to open a UI or attach to a parent UI anyway.
 
 ##-start[_ifprivate|_ifpublic]
 Start the torrent
