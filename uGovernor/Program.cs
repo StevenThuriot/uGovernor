@@ -20,9 +20,10 @@ namespace uGovernor
                 return;
             }
 
-            var enableUI = args.Contains("-ui", StringComparer.OrdinalIgnoreCase);
+            var enableUI = args.Contains("-ui", StringComparer.OrdinalIgnoreCase) || args.Any(x => x.StartsWith("-list", StringComparison.OrdinalIgnoreCase));
             bool attached = false;
             
+                        
             if (enableUI)
             {
                 if (NativeMethods.AttachConsole(-1)) //Try to attach to parent. Useful if already running in a console
