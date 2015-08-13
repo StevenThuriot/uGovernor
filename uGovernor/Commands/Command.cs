@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using uGovernor.Domain;
 
-namespace uGovernor
+namespace uGovernor.Commands
 {
     class Command
     {
@@ -57,7 +58,7 @@ namespace uGovernor
         }
 
 
-        public void Run(Torrent torrent)
+        public virtual void Run(Torrent torrent)
         {
             Trace.TraceInformation($"Running action {Action}...");
 

@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 
-namespace uGovernor
+namespace uGovernor.Domain
 {
     public class MultiTorrent : Torrent, IReadOnlyList<Torrent>
     {
@@ -15,7 +15,7 @@ namespace uGovernor
         string _hashes;
 
         internal MultiTorrent(TorrentServer server, IEnumerable<Torrent> torrents)
-            : base(server, "<MultiTorrentHash>")
+            : base(server, "<MultiTorrentHash>", "<MultiTorrent>")
         {
             if (server == null) throw new ArgumentNullException(nameof(server));
             if (torrents == null || !torrents.Any()) throw new ArgumentNullException(nameof(torrents));

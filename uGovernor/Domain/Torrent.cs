@@ -5,22 +5,31 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 
-namespace uGovernor
+namespace uGovernor.Domain
 {
     public class Torrent : IKnowAboutProperties
     {
         public string Hash { get; private set; }
+        public string Name { get; private set; }
 
         TorrentServer _server;
 
         internal Torrent(TorrentServer torrentServer, string hash)
+            : this(torrentServer, hash, hash)
+        {
+
+        }
+
+        internal Torrent(TorrentServer torrentServer, string hash, string name)
         {
             if (torrentServer == null) throw new ArgumentNullException(nameof(torrentServer));
             if (hash == null) throw new ArgumentNullException(nameof(hash));
+            if (name == null) throw new ArgumentNullException(nameof(name));
 
 
             _server = torrentServer;
             Hash = hash;
+            Name = name;
         }
 
         bool IKnowAboutProperties.PropertiesAreSet

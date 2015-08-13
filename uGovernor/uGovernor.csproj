@@ -47,19 +47,21 @@
     <Reference Include="System.Net.Http" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddCommand.cs" />
-    <Compile Include="Command.cs" />
-    <Compile Include="Execution.cs" />
+    <Compile Include="Commands\AddCommand.cs" />
+    <Compile Include="Commands\Command.cs" />
+    <Compile Include="Commands\IServerCommand.cs" />
+    <Compile Include="Domain\Execution.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="Governor.cs" />
-    <Compile Include="ITorrent.cs" />
-    <Compile Include="MultiTorrent.cs" />
+    <Compile Include="Domain\Governor.cs" />
+    <Compile Include="Domain\ITorrent.cs" />
+    <Compile Include="Commands\ListCommand.cs" />
+    <Compile Include="Domain\MultiTorrent.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Security.cs" />
-    <Compile Include="SettingsManager.cs" />
-    <Compile Include="Torrent.cs" />
-    <Compile Include="TorrentServer.cs" />
+    <Compile Include="Domain\SettingsManager.cs" />
+    <Compile Include="Domain\Torrent.cs" />
+    <Compile Include="Domain\TorrentServer.cs" />
     <Compile Include="NativeMethods.cs" />
   </ItemGroup>
   <ItemGroup>

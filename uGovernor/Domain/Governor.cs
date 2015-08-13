@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Security;
+using uGovernor.Commands;
 
-
-namespace uGovernor
+namespace uGovernor.Domain
 {
     class Governor
     {
         public TorrentServer Server { get; }
         public IEnumerable<Command> Actions { get; }
-        public IEnumerable<AddCommand> AddActions { get; }
+        public IEnumerable<IServerCommand> ServerCommands { get; }
         public IEnumerable<string> Hashes { get; }
 
         /*
@@ -24,6 +24,10 @@ namespace uGovernor
         -noTokenAuth
         -debug (appends tracing to debug.log)
         -ui (shows UI, will attach to parent if already in a console)
+        -list
+        -listprivate
+        -listpublic
+
 
         -start[_ifprivate|_ifpublic]
         -stop[_ifprivate|_ifpublic]
@@ -52,7 +56,7 @@ namespace uGovernor
             var actions = new List<Command>();
             var hashes = new List<string>();
 
-            var addTorrents = new List<AddCommand>();
+            var serverCommands = new List<IServerCommand>();
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -84,11 +88,11 @@ namespace uGovernor
                         break;
 
                     case "ADD":
-                        addTorrents.Add(new AddCommand(args[++i], true));
+                        serverCommands.Add(new AddCommand(args[++i], true));
                         break;
 
                     case "ADDRESOLVED":
-                        addTorrents.Add(new AddCommand(args[++i], false));
+                        serverCommands.Add(new AddCommand(args[++i], false));
                         break;
 
                     case "DEBUG":
@@ -96,6 +100,18 @@ namespace uGovernor
                         writerListener.TraceOutputOptions |= TraceOptions.DateTime;
                         Trace.AutoFlush = true; //Otherwise nothing will be written to the file.
                         Trace.Listeners.Add(writerListener);
+                        break;
+
+                    case "LIST":
+                        serverCommands.Add(new ListCommand(Execution.Always));
+                        break;
+
+                    case "LISTPRIVATE":
+                        serverCommands.Add(new ListCommand(Execution.Private));
+                        break;
+
+                    case "LISTPUBLIC":
+                        serverCommands.Add(new ListCommand(Execution.Public));
                         break;
 
                     case "UI":
@@ -119,14 +135,14 @@ namespace uGovernor
             }
 
             Server = new TorrentServer(host, user, password, useToken);
-            AddActions = addTorrents;
+            ServerCommands = serverCommands;
             Actions = actions;
             Hashes = hashes;
         }
 
         public void Run()
         {
-            if (!Actions.Any() && !AddActions.Any()) return; //Skip execution if no actions have been declared
+            if (!Actions.Any() && !ServerCommands.Any()) return; //Skip execution if no actions have been declared
 
 
             IEnumerable<Torrent> torrents;
@@ -146,7 +162,7 @@ namespace uGovernor
                 foreach (var torrentGroup in torrents.GroupPer(30).Select(hashes => new MultiTorrent(Server, hashes)))
                     action.Run(torrentGroup);
 
-            foreach (var action in AddActions)
+            foreach (var action in ServerCommands)
                 action.Run(Server);
         }
     }

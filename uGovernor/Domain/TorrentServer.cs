@@ -8,7 +8,7 @@ using System.Security;
 using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 
-namespace uGovernor
+namespace uGovernor.Domain
 {
     public class TorrentServer
     {
@@ -84,8 +84,7 @@ namespace uGovernor
             var json = _serializer.Deserialize<Dictionary<string, object>>(reply);
             var torrents = ((ArrayList)json["torrents"])
                                         .Cast<ArrayList>()
-                                        .Select(x => (string)x[0]/* first index == hash */)
-                                        .Select(x => new Torrent(this, x))
+                                        .Select(x => new Torrent(this, (string)x[0], (string)x[2]))
                                         .ToArray();
 
             return torrents;

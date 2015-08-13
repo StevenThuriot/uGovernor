@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Security;
 
-namespace uGovernor
+namespace uGovernor.Domain
 {
     class SettingsManger
     {

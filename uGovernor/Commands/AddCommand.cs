@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using uGovernor.Domain;
 
-namespace uGovernor
+namespace uGovernor.Commands
 {
-    class AddCommand
+    class AddCommand : IServerCommand
     {
         string _hash;
         bool _useMagnet;
