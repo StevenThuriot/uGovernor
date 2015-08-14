@@ -19,8 +19,6 @@ namespace uGovernor.Commands
 
         public void Run(TorrentServer server)
         {
-            Console.SetBufferSize(short.MaxValue - 1, short.MaxValue - 1);
-
             var torrents = server.GetAllTorrents();
 
             switch (_executionLevel)
