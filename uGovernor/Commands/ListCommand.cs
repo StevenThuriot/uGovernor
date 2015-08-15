@@ -19,6 +19,8 @@ namespace uGovernor.Commands
 
         public void Run(TorrentServer server)
         {
+            Program.EnsureShell();
+
             var torrents = server.GetAllTorrents();
 
             switch (_executionLevel)
@@ -32,11 +34,11 @@ namespace uGovernor.Commands
                     break;
             }
 
-            Trace.WriteLine("");
+            Console.WriteLine("");
 
             if (!torrents.Any())
             {
-                Trace.WriteLine("No relevant torrents found...");
+                Console.WriteLine("No relevant torrents found...");
                 return;
             }
             
@@ -46,21 +48,21 @@ namespace uGovernor.Commands
             var alignment = " | {0,-" + longestName + "}";
 
 
-            Trace.WriteLine(" ♦");
-            Trace.WriteLine(" | Listing torrents...");
+            Console.WriteLine(" ♦");
+            Console.WriteLine(" | Listing torrents...");
 
             var line = " ♦" + new string('-', longestName + hashLength + 5) + "♦";
-            Trace.WriteLine(line);
+            Console.WriteLine(line);
 
             foreach (var torrent in torrents)
             {
-                Trace.Write(string.Format(alignment, torrent.Name));
-                Trace.Write(" : ");                
-                Trace.Write(torrent.Hash);
-                Trace.WriteLine(" |");
+                Console.Write(string.Format(alignment, torrent.Name));
+                Console.Write(" : ");                
+                Console.Write(torrent.Hash);
+                Console.WriteLine(" |");
             }
 
-            Trace.WriteLine(line);
+            Console.WriteLine(line);
         }
     }
 }

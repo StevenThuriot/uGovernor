@@ -20,23 +20,11 @@ namespace uGovernor
                 return;
             }
 
-            var enableUI = args.Contains("-ui", StringComparer.OrdinalIgnoreCase) || args.Any(x => x.StartsWith("-list", StringComparison.OrdinalIgnoreCase));
-            bool attached = false;
-            
-                        
-            if (enableUI)
-            {
-                if (NativeMethods.AttachConsole(-1)) //Try to attach to parent. Useful if already running in a console
-                {
-                    attached = true;
-                }
-                else          
-                {
-                    enableUI = NativeMethods.AllocConsole();
-                }
-            }
+            _enableUI = args.Contains("-ui", StringComparer.OrdinalIgnoreCase);
+            _attached = false;
 
-            if (enableUI)
+
+            if (_enableUI && EnsureShell())
             {
                 var consoleListener = new ConsoleTraceListener();
                 consoleListener.TraceOutputOptions |= TraceOptions.DateTime | TraceOptions.Timestamp;
@@ -68,18 +56,39 @@ namespace uGovernor
             }
             finally
             {
-                if (enableUI)
+                if (_enableUI)
                 {
                     Console.Write("Press any key to continue...");
 
-                    if (!attached)
-                    {
-                        Console.ReadKey(true);
-                    }
+                    if (!_attached) Console.ReadKey(true);
 
                     NativeMethods.FreeConsole();
                 }
             }
+        }
+
+        static bool _shellEnsured;
+        static bool _enableUI;
+        static bool _attached;
+
+        internal static bool EnsureShell()
+        {
+            if (!_shellEnsured)
+            {
+
+                if (NativeMethods.AttachConsole(-1)) //Try to attach to parent. Useful if already running in a console
+                {
+                    _attached = true;
+                }
+                else
+                {
+                    _enableUI = NativeMethods.AllocConsole();
+                }
+
+                _shellEnsured = true;
+            }
+
+            return _enableUI;
         }
     }
 }
