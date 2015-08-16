@@ -106,6 +106,8 @@ A sort of catch all command. When wanting to set any property, e.g. download pat
 Securely saves the passed values to a file.
 Currently, only user, password and host are used.
 
+When adding or changing a property, it is not needed to supply all the previously saved (unaltered) properties again. If the property already existed in the file, it will be overridden, if not, it will be added. If you want a certain property deleted, you'll have to fully recreate the `cfg` file.
+
 ##-add [HASH]
 Add a torrent to the list by passing a hash. The torrent will be resolved using a magnet link.
 
