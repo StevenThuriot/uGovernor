@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Management;
+using System.Security;
 using System.Security.Cryptography;
 
 namespace uGovernor
@@ -11,7 +12,10 @@ namespace uGovernor
         const int _iterations = 1675;
         const int keySize = sizeof(ushort);
 
-        internal static string Encrypt(string text)
+        internal static SecureString Encrypt(SecureString text) => Encrypt(text.ToUnsecureString());
+        internal static byte[] Decrypt(SecureString text) => Decrypt(text.ToUnsecureString());
+
+        internal static SecureString Encrypt(string text)
         {
             var salt = CreateSalt();
             
@@ -63,13 +67,13 @@ namespace uGovernor
                         cryptoStream.FlushFinalBlock();
 
                         var encrypted = memStream.ToArray();
-                        return Convert.ToBase64String(encrypted);
+                        return Convert.ToBase64String(encrypted).ToSecureString();
                     }
                 }
             }
         }
 
-        internal static string Decrypt(string text)
+        internal static byte[] Decrypt(string text)
         {
             var src = Convert.FromBase64String(text);
 
@@ -95,26 +99,24 @@ namespace uGovernor
             {
                 aes.BlockSize = 128;
                 aes.KeySize = 256;
-                var key = new Rfc2898DeriveBytes(_fingerPrint.Value, salt, _iterations);
 
-                aes.Key = key.GetBytes(16);
-                aes.IV = iv;
-                aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
-
-                using (ICryptoTransform decrypt = aes.CreateDecryptor())
+                using (var key = new Rfc2898DeriveBytes(_fingerPrint.Value, salt, _iterations))
                 {
-                    byte[] dest = decrypt.TransformFinalBlock(content, 0, content.Length);
+                    aes.Key = key.GetBytes(16);
 
-                    unsafe
+                    aes.IV = iv;
+                    aes.Mode = CipherMode.CBC;
+                    aes.Padding = PaddingMode.PKCS7;
+
+                    using (ICryptoTransform decrypt = aes.CreateDecryptor())
                     {
-                        fixed (byte* b = dest)
-                        {
-                            var charPtr = (char*)b;
-                            var value = new string(charPtr, 0, dest.Length / sizeof(char));
-                            return value;
-                        }
+                        var result = decrypt.TransformFinalBlock(content, 0, content.Length);
 
+                        Array.Clear(salt, 0, salt.Length);
+                        Array.Clear(iv, 0, iv.Length);
+                        Array.Clear(content, 0, content.Length);
+
+                        return result;
                     }
                 }
             }
