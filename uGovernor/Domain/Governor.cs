@@ -129,9 +129,9 @@ namespace uGovernor.Domain
             {
                 var settings = new SettingsManger();
 
-                if (user == null) user = settings.Get("user");
-                if (password == null) password = settings.GetSecure("password");
-                if (host == null) host = settings.GetUri("host");
+                if (user == null) user = settings.Get("USER");
+                if (password == null) password = settings.GetSecure("PASSWORD");
+                if (host == null) host = settings.GetUri("HOST");
             }
 
             Server = new TorrentServer(host, user, password, useToken);

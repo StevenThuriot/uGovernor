@@ -4,25 +4,23 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security;
+using Vault;
 
 namespace uGovernor.Domain
 {
     class SettingsManger
     {
         readonly string _path;
-        readonly bool _encrypted;
         IDictionary<string, SecureString> _settings;
 
-        public SettingsManger(string path, bool encrypted = true)
+        public SettingsManger(string path)
         {
-            _path = path;
-            _encrypted = encrypted;
-
-            _settings = DecryptFile();
+            _path = path;        
+            Refresh();
         }
 
-        public SettingsManger(bool encrypted = true)
-            : this("uGovernor.cfg", encrypted)
+        public SettingsManger()
+            : this("uGovernor.cfg")
         {
         }
 
@@ -31,10 +29,7 @@ namespace uGovernor.Domain
             SecureString value;
             if (_settings.TryGetValue(setting, out value))
             {
-                if (!_encrypted)
-                    return value.ToUnsecureString();
-
-                return Security.Decrypt(value).ToUnsecureString();
+                return value.ToUnsecureString();
             }
 
             return null;
@@ -45,10 +40,7 @@ namespace uGovernor.Domain
             SecureString value;
             if (_settings.TryGetValue(setting, out value))
             {
-                if (!_encrypted)
-                    return value;
-
-                return Security.Decrypt(value).ToSecureString();
+                return value;
             }
 
             return null;
@@ -64,7 +56,7 @@ namespace uGovernor.Domain
 
         public void Set(string setting, string value)
         {
-            _settings[setting] = _encrypted ? Security.Encrypt(value) : value.ToSecureString();
+            _settings[setting] = value.ToSecureString();
         }
 
         public void Set(string setting, SecureString value)
@@ -80,74 +72,16 @@ namespace uGovernor.Domain
         public void Save()
         {
             Trace.TraceInformation("Saving settings to file...");
-            EncryptFile(_settings);
+            Security.EncryptFile(_settings, _path, FingerPrint.Value);
         }
 
         public void Refresh()
         {
             Trace.TraceInformation("Refreshing settings from file...");
-            _settings = DecryptFile();
-        }
 
-        const char SettingSeparator = '-';
-        IDictionary<string, SecureString> DecryptFile()
-        {
-            var result = new Dictionary<string, SecureString>(StringComparer.OrdinalIgnoreCase);
-
-            if (!File.Exists(_path)) return result;
-
-            var src = File.ReadAllText(_path);
-
-            var bytes = Security.Decrypt(src);
-            string decrypted;
-            unsafe
-            {
-                fixed (byte* b = bytes)
-                {
-                    var charPtr = (char*)b;
-                    decrypted = new string(charPtr, 0, bytes.Length / sizeof(char));
-                    Array.Clear(bytes, 0, bytes.Length);
-                }
-            }
-
-            var lines = decrypted.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
-                                 .Select(x => x.Split(new[] { SettingSeparator }, 2));
-
-            if (_encrypted)
-            {
-                foreach (var line in lines)
-                {
-                    var key = line[0];
-                    var value = line[1];
-
-                    result[key] = value.ToSecureString();
-                }
-            }
-            else
-            {
-                foreach (var line in lines)
-                {
-                    var key = line[0];
-                    var value = Security.Decrypt(line[1]).ToSecureString();
-
-                    result[key] = value;
-                }
-            }
-
-            return result;
-        }
-
-        void EncryptFile(IDictionary<string, SecureString> settings)
-        {
-            if (!_encrypted)
-                foreach (var setting in settings.ToArray()) //current settings aren't encrypted, encrypt before writing.
-                    settings[setting.Key] = Security.Encrypt(setting.Value);
-
-            var content = string.Join(Environment.NewLine, settings.Select(x => $"{x.Key}{SettingSeparator}{x.Value.ToUnsecureString()}"));
-            using (var encryptedContent = Security.Encrypt(content))
-            {
-                File.WriteAllText(_path, encryptedContent.ToUnsecureString());
-            }
+            var password = FingerPrint.Value;
+            _settings = Security.DecryptFile(_path, password);
+            Array.Clear(password, 0, password.Length);
         }
     }
 }

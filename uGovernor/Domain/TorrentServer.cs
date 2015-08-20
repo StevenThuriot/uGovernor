@@ -93,6 +93,7 @@ namespace uGovernor.Domain
         WebClient CreateService()
         {
             var client = new WebClient();
+            
             client.Credentials = new NetworkCredential(_username, _password);
             return client;
         }

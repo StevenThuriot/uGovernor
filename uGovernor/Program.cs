@@ -36,7 +36,7 @@ namespace uGovernor
             {
                 if (args.Contains("-SAVE", StringComparer.OrdinalIgnoreCase))
                 {
-                    var settings = new SettingsManger(false);
+                    var settings = new SettingsManger();
 
                     var commands = args.Where(x => !StringComparer.OrdinalIgnoreCase.Equals(x, "-SAVE"))
                                        .Select((x, i) => i % 2 == 0 ? x.TrimStart('-').ToUpperInvariant() : x)

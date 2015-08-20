@@ -1,5 +1,6 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
+using System.Security;
+using Vault;
 
 namespace uGovernor
 {
@@ -17,7 +18,19 @@ namespace uGovernor
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool FreeConsole();
 
-        [DllImport("msvcrt.dll", EntryPoint = "memcpy", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        internal static extern IntPtr memcpy(IntPtr dest, IntPtr src, UIntPtr count);
+
+
+        internal static unsafe byte[] GetBytes(this SecureString value) => GetBytes(value.ToUnsecureString());
+
+        internal static unsafe byte[] GetBytes(this string value)
+        {
+            var bytes = new byte[value.Length * sizeof(char)];
+
+            fixed (void* v = value)
+            fixed (void* b = bytes)
+                UnsafeNativeMethods.memcpy(b, v, bytes.Length);
+
+            return bytes;
+        }
     }
 }
