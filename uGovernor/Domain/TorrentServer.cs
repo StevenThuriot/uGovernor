@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Security;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Web.Script.Serialization;
 
 namespace uGovernor.Domain
@@ -120,6 +121,8 @@ namespace uGovernor.Domain
                 try
                 {
                     reply = client.DownloadString(uri);
+                    Thread.Sleep(25); //Wait a bit so we don't hammer.
+
                     return reply;
                 }
                 catch (WebException)
