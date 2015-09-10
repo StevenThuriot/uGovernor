@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Security;
+using System.Threading;
 using uGovernor.Commands;
 
 namespace uGovernor.Domain
@@ -158,9 +159,15 @@ namespace uGovernor.Domain
                 Trace.TraceInformation($"Retrieved {torrents.Count()} torrents;");
             }
 
+            var torrentGroups = torrents.GroupPer(30).Select(hashes => new MultiTorrent(Server, hashes)).ToArray();
+
             foreach (var action in Actions)
-                foreach (var torrentGroup in torrents.GroupPer(30).Select(hashes => new MultiTorrent(Server, hashes)))
+            {
+                foreach (var torrentGroup in torrentGroups)
                     action.Run(torrentGroup);
+
+                Thread.Sleep(125); //Don't hammer inbetween actions
+            }
 
             foreach (var action in ServerCommands)
                 action.Run(Server);
