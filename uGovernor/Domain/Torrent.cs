@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -99,65 +98,29 @@ namespace uGovernor.Domain
             return result;
         }
 
-        public string Start()
-        {
-            return CallServer();
-        }
+        public string Start() => CallServer();
 
-        public string Stop()
-        {
-            return CallServer();
-        }
+        public string Stop() => CallServer();
 
-        public string Remove()
-        {
-            return CallServer();
-        }
+        public string Remove() => CallServer();
 
-        public string RemoveData()
-        {
-            return CallServer();
-        }
+        public string RemoveData() => CallServer();
 
-        public string ForceStart()
-        {
-            return CallServer();
-        }
+        public string ForceStart() => CallServer();
 
-        public string Pause()
-        {
-            return CallServer();
-        }
+        public string Pause() => CallServer();
 
-        public string Unpause()
-        {
-            return CallServer();
-        }
+        public string Unpause() => CallServer();
 
-        public string Recheck()
-        {
-            return CallServer();
-        }
+        public string Recheck() => CallServer();
 
-        public virtual string SetPrio(string prio)
-        {
-            return _server.ExecuteAction($"setprio&hash={Hash}&p={prio}");
-        }
+        public virtual string SetPrio(string prio) => _server.ExecuteAction($"setprio&hash={Hash}&p={prio}");
 
-        public string SetLabel(string value)
-        {
-            return SetProperty("label", value);
-        }
+        public string SetLabel(string value) => SetProperty("label", value);
 
-        public string RemoveLabel()
-        {
-            return SetProperty("label", "");
-        }
+        public string RemoveLabel() => SetProperty("label", "");
 
-        public virtual string SetProperty(string property, string value)
-        {
-            return _server.ExecuteAction($"setprops&hash={Hash}&s={property}&v={value}");
-        }
+        public virtual string SetProperty(string property, string value) => _server.ExecuteAction($"setprops&hash={Hash}&s={property}&v={value}");
 
         public virtual string SetLabel(Execution execution, string value)
         {
@@ -191,10 +154,7 @@ namespace uGovernor.Domain
             return null;
         }
 
-        protected virtual string CallServer([CallerMemberName] string action = null)
-        {
-            return _server.ExecuteAction($"{action.ToLowerInvariant()}&hash={Hash}");
-        }
+        protected virtual string CallServer([CallerMemberName] string action = null) => _server.ExecuteAction($"{action.ToLowerInvariant()}&hash={Hash}");
 
 
 

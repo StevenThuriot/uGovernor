@@ -26,8 +26,7 @@ namespace uGovernor
         {
             var bytes = new byte[value.Length * sizeof(char)];
 
-            fixed (void* v = value)
-            fixed (void* b = bytes)
+            fixed (void* v = value, b = bytes)
                 UnsafeNativeMethods.memcpy(b, v, bytes.Length);
 
             return bytes;

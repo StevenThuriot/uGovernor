@@ -17,7 +17,7 @@ namespace uGovernor.Domain
         string _username;
         bool _useTokenAuth;
 
-        public Uri Host { get; private set; }
+        public Uri Host { get; }
 
         string _token;
         JavaScriptSerializer _serializer;
@@ -101,10 +101,7 @@ namespace uGovernor.Domain
 
 
 
-        internal string ExecuteAction(string action)
-        {
-            return Execute($"action={action}");
-        }
+        internal string ExecuteAction(string action) => Execute($"action={action}");
 
         internal string Execute(string action)
         {
