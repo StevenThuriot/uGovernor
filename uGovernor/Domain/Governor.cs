@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Security;
 using System.Threading;
@@ -97,7 +98,7 @@ namespace uGovernor.Domain
                         break;
 
                     case "DEBUG":
-                        var writerListener = new TextWriterTraceListener("debug.log");
+                        var writerListener = new TextWriterTraceListener(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug.log"));
                         writerListener.TraceOutputOptions |= TraceOptions.DateTime;
                         Trace.AutoFlush = true; //Otherwise nothing will be written to the file.
                         Trace.Listeners.Add(writerListener);

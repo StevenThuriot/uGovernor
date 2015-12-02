@@ -1,21 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Security;
 using Vault;
+using static System.IO.Path;
 
 namespace uGovernor.Domain
 {
     class SettingsManger
+#if DEBUG
+        : IEnumerable<string>
+#endif
     {
         readonly string _path;
         IDictionary<string, SecureString> _settings;
 
         public SettingsManger(string path)
         {
-            _path = path;        
+            _path = IsPathRooted(path) 
+                    ? path 
+                    : Combine(AppDomain.CurrentDomain.BaseDirectory, path);
+
             Refresh();
         }
 
@@ -83,5 +88,10 @@ namespace uGovernor.Domain
             _settings = Security.DecryptFile(_path, password);
             Array.Clear(password, 0, password.Length);
         }
+
+#if DEBUG
+        public IEnumerator<string> GetEnumerator() => _settings.Keys.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+#endif
     }
 }

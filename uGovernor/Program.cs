@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime;
 using uGovernor.Domain;
+using static System.Console;
 
 namespace uGovernor
 {
@@ -19,6 +20,8 @@ namespace uGovernor
                 Environment.Exit(1);
                 return;
             }
+
+            Trace.TraceInformation(string.Join("~", args));
 
             _enableUI = args.Contains("-ui", StringComparer.OrdinalIgnoreCase);
             _attached = false;
@@ -48,6 +51,18 @@ namespace uGovernor
                     Trace.TraceInformation("Saving settings...");
                     settings.Save();
                 }
+#if DEBUG
+                else if (args.Contains("-PRINTCFG", StringComparer.OrdinalIgnoreCase))
+                {
+                    EnsureShell();
+
+                    var settings = new SettingsManger();
+                    foreach (var setting in settings)
+                    {
+                        Console.WriteLine($"{setting} - {settings.Get(setting)}");
+                    }                    
+                }
+#endif
                 else
                 {
                     var governor = new Governor(args);
@@ -58,9 +73,10 @@ namespace uGovernor
             {
                 if (_enableUI)
                 {
-                    Console.Write("Press any key to continue...");
+                    Write("Press any key to continue...");
 
-                    if (!_attached) Console.ReadKey(true);
+                    if (!_attached)
+                        ReadKey(true);
 
                     NativeMethods.FreeConsole();
                 }
