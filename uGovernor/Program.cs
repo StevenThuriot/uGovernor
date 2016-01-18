@@ -7,7 +7,7 @@ using static System.Console;
 
 namespace uGovernor
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
@@ -68,6 +68,13 @@ namespace uGovernor
                     var governor = new Governor(args);
                     governor.Run();
                 }
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError(string.Format("{0}{0}{1}{0}", Environment.NewLine, e.Message));
+
+                if (_attached)
+                    ReadKey();
             }
             finally
             {
