@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>µGovernor by StevenThuriot</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>µGovernor</h1>
+        <h2>a µTorrent cli</h2>
+        <a href="https://github.com/StevenThuriot/uGovernor" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h1>
+
+<p>µGovernor supports both authenticating using a webtoken or not. For security reasons, it's advised to keep the webtoken turned on.</p>
+
+<p>A few settings will always need to be passed to µGovernor:</p>
+
+<ul>
+<li>The username</li>
+<li>The password</li>
+<li>And obviously: the hostname.</li>
+</ul>
+
+<p>Since it wouldn't be secure keeping these in the "run program" feature of µTorrent, µGovernor supports saving these in an AES-256 encrypted file. The file is encrypted using a fingerprint built from your pc's specs, so it can only be decompiled on your own hardware, keeping your settings safe.</p>
+
+<p>Create such a file can be done using the cli:</p>
+
+<pre><code>uGovernor -save user USERNAME password PASSWORD host http://HOSTNAME:PORT
+</code></pre>
+
+<p>After the file is created, it won't be necesairy anymore to pass these settings to the cli. If you do pass any of these settings, they will overule the ones in the config file (e.g. for temporarely logging into a different server than your default one).</p>
+
+<p>After this, the cli can be used by passing it startup arguments, e.g.</p>
+
+<pre><code>uGovernor -start
+</code></pre>
+
+<p>This command will start all the torrents currently in your list.</p>
+
+<h1>
+<a id="available-commands" class="anchor" href="#available-commands" aria-hidden="true"><span class="octicon octicon-link"></span></a>Available Commands</h1>
+
+<p>The following actions can be used:</p>
+
+<h2>
+<a id="-host-value" class="anchor" href="#-host-value" aria-hidden="true"><span class="octicon octicon-link"></span></a>-host [VALUE]</h2>
+
+<p>Sets the server to connect to. 
+e.g. <code>-host http://myserver.com:8080/</code>
+It's not necessairy to add <code>/gui/</code>, but won't hurt either if you do.</p>
+
+<h2>
+<a id="-user-value" class="anchor" href="#-user-value" aria-hidden="true"><span class="octicon octicon-link"></span></a>-user [VALUE]</h2>
+
+<p>Sets the username to log in with.</p>
+
+<h2>
+<a id="-password-value" class="anchor" href="#-password-value" aria-hidden="true"><span class="octicon octicon-link"></span></a>-password [VALUE]</h2>
+
+<p>Sets the password to log in with.</p>
+
+<h2>
+<a id="-hash-value" class="anchor" href="#-hash-value" aria-hidden="true"><span class="octicon octicon-link"></span></a>-hash [VALUE]</h2>
+
+<p>Sets the torrent hash we want to use our passed commands on. When ommited, the cli will execute the commands on all torrents currently in the list.</p>
+
+<p>This command can be used multiple times when you want to use the same command on several hashes at once.</p>
+
+<pre><code>uGovernor -start -hash HASH1 -hash HASH2
+</code></pre>
+
+<h2>
+<a id="-notokenauth" class="anchor" href="#-notokenauth" aria-hidden="true"><span class="octicon octicon-link"></span></a>-noTokenAuth</h2>
+
+<p>Disables token auth, when you have disabled it in the webgui as well. 
+Strongly advised not to do this!</p>
+
+<h2>
+<a id="-debug" class="anchor" href="#-debug" aria-hidden="true"><span class="octicon octicon-link"></span></a>-debug</h2>
+
+<p>All actions will be written/appended to debug.log</p>
+
+<h2>
+<a id="-ui" class="anchor" href="#-ui" aria-hidden="true"><span class="octicon octicon-link"></span></a>-ui</h2>
+
+<p>Shows a console UI. When started from a console, it will attach to parent instead.</p>
+
+<h2>
+<a id="-listpublicprivate" class="anchor" href="#-listpublicprivate" aria-hidden="true"><span class="octicon octicon-link"></span></a>-list[public|private]</h2>
+
+<p>List all torrents and their hashes. A filter can be used (public or private). The filter is optional. Not supplying it will result in all torrents being printed.</p>
+
+<p>When <code>-ui</code> is not supplied, it will try to open a UI or attach to a parent UI anyway.</p>
+
+<h2>
+<a id="-start_ifprivate_ifpublic" class="anchor" href="#-start_ifprivate_ifpublic" aria-hidden="true"><span class="octicon octicon-link"></span></a>-start[_ifprivate|_ifpublic]</h2>
+
+<p>Start the torrent</p>
+
+<h2>
+<a id="-stop_ifprivate_ifpublic" class="anchor" href="#-stop_ifprivate_ifpublic" aria-hidden="true"><span class="octicon octicon-link"></span></a>-stop[_ifprivate|_ifpublic]</h2>
+
+<p>Stop the torrent</p>
+
+<h2>
+<a id="-forcestart_ifprivate_ifpublic" class="anchor" href="#-forcestart_ifprivate_ifpublic" aria-hidden="true"><span class="octicon octicon-link"></span></a>-forcestart[_ifprivate|_ifpublic]</h2>
+
+<p>Force Start the torrent</p>
+
+<h2>
+<a id="-pause_ifprivate_ifpublic" class="anchor" href="#-pause_ifprivate_ifpublic" aria-hidden="true"><span class="octicon octicon-link"></span></a>-pause[_ifprivate|_ifpublic]</h2>
+
+<p>Pause the torrent</p>
+
+<h2>
+<a id="-unpause_ifprivate_ifpublic" class="anchor" href="#-unpause_ifprivate_ifpublic" aria-hidden="true"><span class="octicon octicon-link"></span></a>-unpause[_ifprivate|_ifpublic]</h2>
+
+<p>Unpause the torrent</p>
+
+<h2>
+<a id="-recheck_ifprivate_ifpublic" class="anchor" href="#-recheck_ifprivate_ifpublic" aria-hidden="true"><span class="octicon octicon-link"></span></a>-recheck[_ifprivate|_ifpublic]</h2>
+
+<p>Recheck the torrent</p>
+
+<h2>
+<a id="-remove_ifprivate_ifpublic" class="anchor" href="#-remove_ifprivate_ifpublic" aria-hidden="true"><span class="octicon octicon-link"></span></a>-remove[_ifprivate|_ifpublic]</h2>
+
+<p>Remove the torrent from the list. This will use your default removal setting.</p>
+
+<h2>
+<a id="-removedata_ifprivate_ifpublic" class="anchor" href="#-removedata_ifprivate_ifpublic" aria-hidden="true"><span class="octicon octicon-link"></span></a>-removeData[_ifprivate|_ifpublic]</h2>
+
+<p>Remove both the torrent and the data from the list.</p>
+
+<h2>
+<a id="-label_ifprivate_ifpublic-value" class="anchor" href="#-label_ifprivate_ifpublic-value" aria-hidden="true"><span class="octicon octicon-link"></span></a>-label[_ifprivate|_ifpublic] [VALUE]</h2>
+
+<p>Set the passed label to the torrent. If it doesn't exist yet, it will be created.</p>
+
+<h2>
+<a id="-removelabel_ifprivate_ifpublic" class="anchor" href="#-removelabel_ifprivate_ifpublic" aria-hidden="true"><span class="octicon octicon-link"></span></a>-removeLabel[_ifprivate|_ifpublic]</h2>
+
+<p>Remove the torrent's label.</p>
+
+<h2>
+<a id="-setprio_ifprivate_ifpublic-value" class="anchor" href="#-setprio_ifprivate_ifpublic-value" aria-hidden="true"><span class="octicon octicon-link"></span></a>-setPrio[_ifprivate|_ifpublic] [VALUE]</h2>
+
+<p>Set the torrents priority.</p>
+
+<h2>
+<a id="-setproperty_ifprivate_ifpublic-name-value" class="anchor" href="#-setproperty_ifprivate_ifpublic-name-value" aria-hidden="true"><span class="octicon octicon-link"></span></a>-setProperty[_ifprivate|_ifpublic] [NAME] [VALUE]</h2>
+
+<p>A sort of catch all command. When wanting to set any property, e.g. download path.</p>
+
+<h2>
+<a id="-save-name-value-name2-value2--name_n-value_n" class="anchor" href="#-save-name-value-name2-value2--name_n-value_n" aria-hidden="true"><span class="octicon octicon-link"></span></a>-save [NAME] [VALUE] [NAME2] [VALUE2] .... [NAME_N] [VALUE_N]</h2>
+
+<p>Securely saves the passed values to a file.
+Currently, only user, password and host are used.</p>
+
+<p>When adding or changing a property, it is not needed to supply all the previously saved (unaltered) properties again. If the property already existed in the file, it will be overridden, if not, it will be added. If you want a certain property deleted, you'll have to fully recreate the <code>cfg</code> file.</p>
+
+<h2>
+<a id="-add-hash" class="anchor" href="#-add-hash" aria-hidden="true"><span class="octicon octicon-link"></span></a>-add [HASH]</h2>
+
+<p>Add a torrent to the list by passing a hash. The torrent will be resolved using a magnet link.</p>
+
+<h2>
+<a id="-addresolved-hash" class="anchor" href="#-addresolved-hash" aria-hidden="true"><span class="octicon octicon-link"></span></a>-addResolved [HASH]</h2>
+
+<p>Add a torrent to the list by passing a hash. The torrent will be resolved using torcache.</p>
+
+<h1>
+<a id="private-and-public-torrents" class="anchor" href="#private-and-public-torrents" aria-hidden="true"><span class="octicon octicon-link"></span></a>Private and Public Torrents</h1>
+
+<p>All commands that have the <code>[_ifprivate|_ifpublic]</code> are in fact, three forms of that command, e.g:</p>
+
+<p>This command will start all torrents in the list:</p>
+
+<pre><code>uGovernor -start
+</code></pre>
+
+<p>While this command will only start the private torrents in the list:</p>
+
+<pre><code>uGovernor -start_ifprivate
+</code></pre>
+
+<p>Obviously, this command will start all the public torrents in the list:</p>
+
+<pre><code>uGovernor -start_ifpublic
+</code></pre>
+
+<h1>
+<a id="combining-commands" class="anchor" href="#combining-commands" aria-hidden="true"><span class="octicon octicon-link"></span></a>Combining Commands</h1>
+
+<p>.. is also a possibility!</p>
+
+<p>For instance, we can stop all public torrents, start all private ones, remove all labels from the public ones, set a label to all private ones and recheck all of them, wether they are public or not.</p>
+
+<pre><code>uGovernor -stop_ifpublic -start_ifprivate -removeLabel_ifpublic -label_ifprivate MyLabel -recheck
+</code></pre>
+
+<h1>
+<a id="legal-information" class="anchor" href="#legal-information" aria-hidden="true"><span class="octicon octicon-link"></span></a>Legal Information</h1>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/StevenThuriot/uGovernor/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/StevenThuriot/uGovernor/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/StevenThuriot/uGovernor"></a> is maintained by <a href="https://github.com/StevenThuriot">StevenThuriot</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
