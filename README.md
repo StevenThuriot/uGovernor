@@ -1,4 +1,4 @@
-# ![µGoverner](https://cloud.githubusercontent.com/assets/544444/9152442/f85bddee-3e28-11e5-82b6-450eeb9028fe.png)
+# ![µGoverner](https://cloud.githubusercontent.com/assets/544444/9152442/f85bddee-3e28-11e5-82b6-450eeb9028fe.png) [![Build status](https://ci.appveyor.com/api/projects/status/wamt000xkykoe9l5?svg=true)](https://ci.appveyor.com/project/StevenThuriot/ugovernor)
 a µTorrent cli
 
 # Usage
