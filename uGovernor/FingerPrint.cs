@@ -19,7 +19,7 @@ namespace uGovernor
         static string RunQuery(params string[] queries)
         {
             var result = queries.AsParallel()
-                                .AsSequential()
+                                .AsOrdered()
                                 .Select(qry => new SelectQuery(qry))
                                 .Select(qry => new ManagementObjectSearcher(qry))
                                 .Select(searcher => searcher.Get())
