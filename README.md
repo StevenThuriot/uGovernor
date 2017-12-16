@@ -36,13 +36,13 @@ Sets the server to connect to.
 e.g. `-host http://myserver.com:8080/`
 It's not necessairy to add `/gui/`, but won't hurt either if you do.
 
-##-user [VALUE]
+## -user [VALUE]
 Sets the username to log in with.
 
-##-password [VALUE]
+## -password [VALUE]
 Sets the password to log in with.
 
-##-hash [VALUE]
+## -hash [VALUE]
 Sets the torrent hash we want to use our passed commands on. When ommited, the cli will execute the commands on all torrents currently in the list.
 
 This command can be used multiple times when you want to use the same command on several hashes at once.
@@ -51,67 +51,67 @@ This command can be used multiple times when you want to use the same command on
 uGovernor -start -hash HASH1 -hash HASH2
 ```
 
-##-noTokenAuth
+## -noTokenAuth
 Disables token auth, when you have disabled it in the webgui as well. 
 Strongly advised not to do this!
 
-##-debug
+## -debug
 All actions will be written/appended to debug.log
 
-##-ui
+## -ui
 Shows a console UI. When started from a console, it will attach to parent instead.
 
-##-list[public|private]
+## -list[public|private]
 List all torrents and their hashes. A filter can be used (public or private). The filter is optional. Not supplying it will result in all torrents being printed.
 
 When `-ui` is not supplied, it will try to open a UI or attach to a parent UI anyway.
 
-##-start[_ifprivate|_ifpublic]
+## -start[_ifprivate|_ifpublic]
 Start the torrent
 
-##-stop[_ifprivate|_ifpublic]
+## -stop[_ifprivate|_ifpublic]
 Stop the torrent
 
-##-forcestart[_ifprivate|_ifpublic]
+## -forcestart[_ifprivate|_ifpublic]
 Force Start the torrent
 
-##-pause[_ifprivate|_ifpublic]
+## -pause[_ifprivate|_ifpublic]
 Pause the torrent
 
-##-unpause[_ifprivate|_ifpublic]
+## -unpause[_ifprivate|_ifpublic]
 Unpause the torrent
 
-##-recheck[_ifprivate|_ifpublic]
+## -recheck[_ifprivate|_ifpublic]
 Recheck the torrent
 
-##-remove[_ifprivate|_ifpublic]
+## -remove[_ifprivate|_ifpublic]
 Remove the torrent from the list. This will use your default removal setting.
 
-##-removeData[_ifprivate|_ifpublic]
+## -removeData[_ifprivate|_ifpublic]
 Remove both the torrent and the data from the list.
 
-##-label[_ifprivate|_ifpublic] [VALUE]
+## -label[_ifprivate|_ifpublic] [VALUE]
 Set the passed label to the torrent. If it doesn't exist yet, it will be created.
 
-##-removeLabel[_ifprivate|_ifpublic]
+## -removeLabel[_ifprivate|_ifpublic]
 Remove the torrent's label.
 
-##-setPrio[_ifprivate|_ifpublic] [VALUE]
+## -setPrio[_ifprivate|_ifpublic] [VALUE]
 Set the torrents priority.
 
-##-setProperty[_ifprivate|_ifpublic] [NAME] [VALUE]
+## -setProperty[_ifprivate|_ifpublic] [NAME] [VALUE]
 A sort of catch all command. When wanting to set any property, e.g. download path.
 
-##-save [NAME] [VALUE] [NAME2] [VALUE2] .... [NAME_N] [VALUE_N]
+## -save [NAME] [VALUE] [NAME2] [VALUE2] .... [NAME_N] [VALUE_N]
 Securely saves the passed values to a file.
 Currently, only user, password and host are used.
 
 When adding or changing a property, it is not needed to supply all the previously saved (unaltered) properties again. If the property already existed in the file, it will be overridden, if not, it will be added. If you want a certain property deleted, you'll have to fully recreate the `cfg` file.
 
-##-add [HASH]
+## -add [HASH]
 Add a torrent to the list by passing a hash. The torrent will be resolved using a magnet link.
 
-##-addResolved [HASH]
+## -addResolved [HASH]
 Add a torrent to the list by passing a hash. The torrent will be resolved using torcache.
 
 
