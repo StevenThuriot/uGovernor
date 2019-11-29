@@ -1,11 +1,11 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Security;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -20,7 +20,7 @@ namespace uGovernor.Domain
         public Uri Host { get; }
 
         string _token;
-        
+
         string Token
         {
             get
@@ -72,8 +72,8 @@ namespace uGovernor.Domain
         internal IEnumerable<Torrent> GetAllTorrents()
         {
             var reply = Execute("list=1");
-                        
-            var json = JsonConvert.DeserializeObject<Dictionary<string, object>>(reply);
+
+            var json = JsonSerializer.Deserialize<Dictionary<string, object>>(reply);
 
             var torrents = ((ArrayList)json["torrents"])
                                         .Cast<ArrayList>()
@@ -86,7 +86,7 @@ namespace uGovernor.Domain
         WebClient CreateService()
         {
             var client = new WebClient();
-            
+
             client.Credentials = new NetworkCredential(_username, _password.ToUnsecureString());
             return client;
         }
@@ -99,8 +99,8 @@ namespace uGovernor.Domain
         {
             if (action == null) throw new ArgumentNullException(nameof(action));
             if (_useTokenAuth) action = $"token={Token}&{action}";
-            
-            
+
+
             string reply;
             using var client = CreateService();
             Trace.TraceInformation($"Calling server: {action}");

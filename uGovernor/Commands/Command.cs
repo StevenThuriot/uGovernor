@@ -26,7 +26,7 @@ namespace uGovernor.Commands
             string command;
             var arguments = new List<string>();
             Execution execution;
-            
+
             if (action.EndsWith(IFPRIVATE, StringComparison.OrdinalIgnoreCase))
             {
                 command = action.Substring(0, action.Length - IFPRIVATE.Length);
@@ -42,8 +42,8 @@ namespace uGovernor.Commands
                 command = action;
                 execution = Execution.Always;
             }
-            
-            while (args.Length > i+1)
+
+            while (args.Length > i + 1)
             {
                 var argument = args[i + 1];
                 if (argument.StartsWith("-", StringComparison.Ordinal)) break; //not an argument but the next command

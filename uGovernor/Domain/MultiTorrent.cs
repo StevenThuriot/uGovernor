@@ -38,7 +38,7 @@ namespace uGovernor.Domain
         {
             return torrents.Select(x => $"&hash={x.Hash}").Aggregate("", (current, next) => current + next);
         }
-        
+
         static string BuildActionParameters(IEnumerable<Torrent> torrents, string actionFormat)
         {
             return torrents.Select(x => string.Format(actionFormat, $"&hash={x.Hash}")).Aggregate("", (current, next) => current + next);
@@ -55,7 +55,7 @@ namespace uGovernor.Domain
             var torrentList = _torrents.OfType<IKnowAboutProperties>().Where(x => !x.PropertiesAreSet).Cast<Torrent>().ToDictionary(x => x.Hash);
 
             var result = CallServer(torrentList.Values, "GetProps");
-            
+
             foreach (var json in _propertyRegex.Matches(result).Cast<Match>().Select(x => x.Groups["properties"]).Where(x => x.Success).Select(x => x.Value))
             {
                 var properties = BuildPropertyDictionary(json);
@@ -211,7 +211,7 @@ namespace uGovernor.Domain
 
             return CallServer(torrents);
         }
-        
+
         public override string Start(Execution execution)
         {
             var torrents = GetExecutableTorrents(execution);

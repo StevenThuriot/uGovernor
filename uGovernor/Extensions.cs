@@ -8,7 +8,7 @@ namespace uGovernor
 {
     static class Extensions
     {
-        public static IEnumerable<IEnumerable<T>> GroupPer<T>(this IEnumerable<T> source, int size) 
+        public static IEnumerable<IEnumerable<T>> GroupPer<T>(this IEnumerable<T> source, int size)
             => source.Select((Item, Index) => new { Item, Index }).GroupBy(x => x.Index / size, x => x.Item);
     }
 

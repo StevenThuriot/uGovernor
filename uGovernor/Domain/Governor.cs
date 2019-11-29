@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Security;
 using System.Threading;
@@ -101,13 +100,6 @@ namespace uGovernor.Domain
                         serverCommands.Add(new AddCommand(args[++i], false));
                         break;
 
-                    case "DEBUG":
-                        var writerListener = new TextWriterTraceListener(File.Open(Path.Combine("debug.log"), FileMode.OpenOrCreate));
-                        writerListener.TraceOutputOptions |= TraceOptions.DateTime;
-                        Trace.AutoFlush = true; //Otherwise nothing will be written to the file.
-                        Trace.Listeners.Add(writerListener);
-                        break;
-
                     default:
                         if (name.StartsWith("LIST"))
                         {
@@ -116,7 +108,7 @@ namespace uGovernor.Domain
                         else if (name.StartsWith("MOVE"))
                         {
                             string destinationFolder = settings.Get("DESTINATION");
-                            
+
                             var moveCommand = new MoveCommand(destinationFolder: destinationFolder,
                                                               execution: ResolveExecutionType(name),
                                                               label: args[++i],
@@ -129,11 +121,6 @@ namespace uGovernor.Domain
                         {
                             actions.Add(Command.Build(name, ref i, args));
                         }
-                        break;
-
-
-                    case "UI":
-                        //Ignore
                         break;
                 }
             }

@@ -12,11 +12,9 @@ namespace uGovernor.Commands
         {
             _executionLevel = executionLevel;
         }
-        
+
         public void Run(TorrentServer server)
         {
-            Program.EnsureShell();
-
             var torrents = server.GetAllTorrents();
 
             switch (_executionLevel)
@@ -37,7 +35,7 @@ namespace uGovernor.Commands
                 WriteLine("No relevant torrents found...");
                 return;
             }
-            
+
             var longestName = torrents.Max(x => x.Name.Length);
             var hashLength = torrents.Max(x => x.Hash.Length);
 
@@ -53,7 +51,7 @@ namespace uGovernor.Commands
             foreach (var torrent in torrents)
             {
                 Write(string.Format(alignment, torrent.Name));
-                Write(" : ");                
+                Write(" : ");
                 Write(torrent.Hash);
                 WriteLine(" |");
             }

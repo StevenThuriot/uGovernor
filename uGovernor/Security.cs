@@ -1,11 +1,11 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace uGovernor
 {
@@ -86,7 +86,7 @@ namespace uGovernor
         public static void EncryptFile(IDictionary<string, SecureString> settings, string path, byte[] password)
         {
             var dictionary = settings.ToDictionary(x => x.Key, x => x.Value.ToUnsecureString(), StringComparer.OrdinalIgnoreCase);
-            var serialized = JsonConvert.SerializeObject(dictionary);
+            var serialized = JsonSerializer.Serialize(dictionary);
             var encrypted = Encrypt(serialized, password);
 
             File.WriteAllText(path, encrypted);
@@ -97,7 +97,7 @@ namespace uGovernor
             var encrypted = File.ReadAllText(path);
             var decrypted = Decrypt(encrypted, password);
 
-            var dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(decrypted);
+            var dictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(decrypted);
 
             return dictionary.ToDictionary(x => x.Key, x => x.Value.ToSecureString(), StringComparer.OrdinalIgnoreCase);
         }

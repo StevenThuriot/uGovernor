@@ -1,7 +1,7 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace uGovernor.Domain
@@ -50,12 +50,12 @@ namespace uGovernor.Domain
         {
             get { return (bool)Properties["Private"]; }
         }
-        
+
         public IEnumerable<string> Trackers
         {
             get { return (IEnumerable<string>)Properties["trackers"]; }
         }
-      
+
         IReadOnlyDictionary<string, object> GetProps()
         {
             var result = CallServer();
@@ -82,8 +82,8 @@ namespace uGovernor.Domain
                 }
 
             */
-            
-            var result = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+
+            var result = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
 
             result["trackers"] = result["trackers"].ToString().Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
             result["Private"] = result["dht"].Equals(-1) || result["pex"].Equals(-1);

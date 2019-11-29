@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using uGovernor.Domain;
 
@@ -15,7 +14,7 @@ namespace uGovernor.Commands
         private readonly string _destinationFolder;
 
         public MoveCommand(string label, string sourceFolder, string destinationFolder, string file, Execution execution)
-            : base (null, null, execution)
+            : base(null, null, execution)
         {
             _sourceFolder = sourceFolder ?? throw new ArgumentNullException(nameof(sourceFolder));
             _destinationFolder = destinationFolder;
@@ -72,7 +71,7 @@ namespace uGovernor.Commands
             foreach (var folder in files)
             {
                 var targetFolder = folder.Key.Replace(sourcePath, targetPath);
-                
+
                 Directory.CreateDirectory(targetFolder);
 
                 foreach (var file in folder)

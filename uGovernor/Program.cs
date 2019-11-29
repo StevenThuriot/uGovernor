@@ -1,41 +1,46 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using uGovernor.Domain;
-using static System.Console;
 
 namespace uGovernor
 {
     public static class Program
     {
         public static void Main(string[] args)
-        {            
+        {
             if (args == null || args.Length == 0)
             {
-                Trace.TraceError("No startup arguments supplied.", args);
-                Environment.Exit(1);
-                return;
+                args = new[] { "-ui", "-list" };
             }
 
-            Trace.TraceInformation(string.Join("~", args));
+            if (args.Contains("-debug", StringComparer.OrdinalIgnoreCase))
+            {
+                var writerListener = new TextWriterTraceListener(File.Open(Path.Combine("debug.log"), FileMode.OpenOrCreate));
+                writerListener.TraceOutputOptions |= TraceOptions.DateTime;
+                Trace.AutoFlush = true; //Otherwise nothing will be written to the file.
+                Trace.Listeners.Add(writerListener);
+
+                args = args.Except(new[] { "-debug" }, StringComparer.OrdinalIgnoreCase).ToArray();
+
+                Trace.TraceInformation("Attached debug log");
+            }
 
             if (args.Contains("-ui", StringComparer.OrdinalIgnoreCase))
             {
-                _enableUI = true;
                 args = args.Except(new[] { "-ui" }, StringComparer.OrdinalIgnoreCase).ToArray();
-            }
 
-            _attached = false;
-
-
-            if (_enableUI && EnsureShell())
-            {
                 var consoleListener = new ConsoleTraceListener();
                 consoleListener.TraceOutputOptions |= TraceOptions.DateTime | TraceOptions.Timestamp;
 
                 Trace.Listeners.Add(consoleListener);
+
+                Trace.TraceInformation("Attached console log");
             }
-            
+
+            Trace.TraceInformation(string.Join("~", args));
+
             try
             {
                 if (args.Contains("-SAVE", StringComparer.OrdinalIgnoreCase))
@@ -52,18 +57,6 @@ namespace uGovernor
                     Trace.TraceInformation("Saving settings...");
                     settings.Save();
                 }
-#if DEBUG
-                else if (args.Contains("-PRINTCFG", StringComparer.OrdinalIgnoreCase))
-                {
-                    EnsureShell();
-
-                    var settings = new SettingsManger();
-                    foreach (var setting in settings)
-                    {
-                        WriteLine($"{setting} - {settings.Get(setting)}");
-                    }                    
-                }
-#endif
                 else
                 {
                     var governor = new Governor(args);
@@ -73,44 +66,14 @@ namespace uGovernor
             catch (Exception e)
             {
                 Trace.TraceError(string.Format("{0}{0}{1}{0}", Environment.NewLine, e));
-                if (_attached)
-                    ReadKey();
             }
             finally
             {
-                if (_enableUI)
+                foreach (var disposable in Trace.Listeners.OfType<IDisposable>())
                 {
-                    Write("Press any key to continue...");
-
-                    if (!_attached)
-                        ReadKey(true);
-
-                    NativeMethods.FreeConsole();
+                    disposable.Dispose();
                 }
             }
-        }
-
-        static bool _shellEnsured;
-        static bool _enableUI;
-        static bool _attached;
-
-        internal static bool EnsureShell()
-        {
-            if (!_shellEnsured)
-            {
-                if (NativeMethods.AttachConsole(-1)) //Try to attach to parent. Useful if already running in a console
-                {
-                    _attached = true;
-                }
-                else
-                {
-                    _enableUI = NativeMethods.AllocConsole();
-                }
-
-                _shellEnsured = true;
-            }
-
-            return _enableUI;
         }
     }
 }
