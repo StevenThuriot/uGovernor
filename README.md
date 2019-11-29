@@ -10,7 +10,7 @@ A few settings will always need to be passed to µGovernor:
 - The password
 - And obviously: the hostname.
 
-Since it wouldn't be secure keeping these in the "run program" feature of µTorrent, µGovernor supports saving these in an AES-256 encrypted file. The file is encrypted using a fingerprint built from your pc's specs, so it can only be decompiled on your own hardware, keeping your settings safe.
+Since it wouldn't be secure keeping these in the "run program" feature of µTorrent, µGovernor supports saving these in an AES-128 encrypted file. The file is encrypted using a fingerprint built from your pc's specs, so it can only be decompiled on your own hardware, keeping your settings safe.
 
 Create such a file can be done using the cli:
 
