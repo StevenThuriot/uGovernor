@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "uGovernor": {
+      "commandName": "Project",
+      "commandLineArgs": "-save user Jistiro password Blub host http://localhost:80"
+    }
+  }
+}

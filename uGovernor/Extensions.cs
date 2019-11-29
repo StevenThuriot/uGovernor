@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.IO;
 
 namespace uGovernor
 {
@@ -75,7 +74,7 @@ namespace uGovernor
             IntPtr unmanagedString = IntPtr.Zero;
             try
             {
-                unmanagedString = Marshal.SecureStringToGlobalAllocUnicode(securePassword);
+                unmanagedString = SecureStringMarshal.SecureStringToGlobalAllocUnicode(securePassword);
                 return Marshal.PtrToStringUni(unmanagedString);
             }
             finally

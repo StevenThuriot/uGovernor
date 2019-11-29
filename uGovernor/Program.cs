@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime;
 using uGovernor.Domain;
 using static System.Console;
 
@@ -10,10 +9,7 @@ namespace uGovernor
     public static class Program
     {
         public static void Main(string[] args)
-        {
-            ProfileOptimization.SetProfileRoot(AppDomain.CurrentDomain.BaseDirectory);
-            ProfileOptimization.StartProfile("uGovernor.jit");
-            
+        {            
             if (args == null || args.Length == 0)
             {
                 Trace.TraceError("No startup arguments supplied.", args);
@@ -23,7 +19,12 @@ namespace uGovernor
 
             Trace.TraceInformation(string.Join("~", args));
 
-            _enableUI = args.Contains("-ui", StringComparer.OrdinalIgnoreCase);
+            if (args.Contains("-ui", StringComparer.OrdinalIgnoreCase))
+            {
+                _enableUI = true;
+                args = args.Except(new[] { "-ui" }, StringComparer.OrdinalIgnoreCase).ToArray();
+            }
+
             _attached = false;
 
 
@@ -39,7 +40,7 @@ namespace uGovernor
             {
                 if (args.Contains("-SAVE", StringComparer.OrdinalIgnoreCase))
                 {
-                    var settings = new SettingsManger();
+                    var settings = new SettingsManger(init: false);
 
                     var commands = args.Where(x => !StringComparer.OrdinalIgnoreCase.Equals(x, "-SAVE"))
                                        .Select((x, i) => i % 2 == 0 ? x.TrimStart('-').ToUpperInvariant() : x)
@@ -59,7 +60,7 @@ namespace uGovernor
                     var settings = new SettingsManger();
                     foreach (var setting in settings)
                     {
-                        Console.WriteLine($"{setting} - {settings.Get(setting)}");
+                        WriteLine($"{setting} - {settings.Get(setting)}");
                     }                    
                 }
 #endif
@@ -71,8 +72,7 @@ namespace uGovernor
             }
             catch (Exception e)
             {
-                Trace.TraceError(string.Format("{0}{0}{1}{0}", Environment.NewLine, e.Message));
-
+                Trace.TraceError(string.Format("{0}{0}{1}{0}", Environment.NewLine, e));
                 if (_attached)
                     ReadKey();
             }
@@ -98,7 +98,6 @@ namespace uGovernor
         {
             if (!_shellEnsured)
             {
-
                 if (NativeMethods.AttachConsole(-1)) //Try to attach to parent. Useful if already running in a console
                 {
                     _attached = true;

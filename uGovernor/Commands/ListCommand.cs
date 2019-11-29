@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using uGovernor.Domain;
 using static System.Console;
 
@@ -18,8 +12,7 @@ namespace uGovernor.Commands
         {
             _executionLevel = executionLevel;
         }
-
-        [SuppressMessage("SonarQube", "S2228:Console logging should not be used", Justification = "This only needs to be shown when in a console")]
+        
         public void Run(TorrentServer server)
         {
             Program.EnsureShell();

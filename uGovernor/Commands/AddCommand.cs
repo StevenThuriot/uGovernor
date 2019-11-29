@@ -11,10 +11,7 @@ namespace uGovernor.Commands
 
         public AddCommand(string hash, bool useMagnet)
         {
-            if (hash == null)
-                throw new ArgumentNullException(nameof(hash));
-
-            _hash = hash;
+            _hash = hash ?? throw new ArgumentNullException(nameof(hash));
             _useMagnet = useMagnet;
         }
 

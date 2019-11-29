@@ -1,35 +1,55 @@
-﻿using System;
+﻿using ORMi;
+using System;
+using System.Diagnostics;
 using System.Linq;
-using System.Management;
 
 namespace uGovernor
 {
     static class FingerPrint
     {
-        static Lazy<string> _fingerPrint = new Lazy<string>(() =>
+        [WMIClass("Win32_Processor")]
+        public class Processor : WMIInstance
         {
-            const string CPUQry = "SELECT UniqueId, ProcessorId, Name, Description, Manufacturer FROM Win32_Processor";
-            const string MoboQry = "SELECT Manufacturer, Product, Name, SerialNumber FROM Win32_BaseBoard";
+            public string UniqueId { get; set; }
+            public string ProcessorId { get; set; }
+            public string Name { get; set; }
+            public string Description { get; set; }
+            public string Manufacturer { get; set; }
 
-            return $"{RunQuery(CPUQry, MoboQry)}";
-        });
+            public override string ToString()
+            {
+                return string.Join("-", UniqueId, ProcessorId, Name, Description, Manufacturer);
+            }
+        }
 
-        public static byte[] Value => NativeMethods.GetBytes(_fingerPrint.Value);
-
-        static string RunQuery(params string[] queries)
+        [WMIClass("Win32_BaseBoard")]
+        public class BaseBoard : WMIInstance
         {
-            var result = queries.AsParallel()
-                                .AsOrdered()
-                                .Select(qry => new SelectQuery(qry))
-                                .Select(qry => new ManagementObjectSearcher(qry))
-                                .Select(searcher => searcher.Get())
-                                .Select(results => results.Cast<ManagementObject>()
-                                                          .SelectMany(x => x.Properties.Cast<PropertyData>())
-                                                          .Select(x => x.Value)
-                                                          .Where(x => x != null)
-                                                          .Aggregate("", (current, next) => current + next));
+            public string Manufacturer { get; set; }
+            public string Product { get; set; }
+            public string Name { get; set; }
+            public string SerialNumber { get; set; }
 
-            return string.Join(">>", result);
+            public override string ToString()
+            {
+                return string.Join("-", Manufacturer, Product, Name, SerialNumber);
+            }
+        }
+
+
+        static Lazy<byte[]> _fingerPrint = new Lazy<byte[]>(RunQuery);
+
+        public static byte[] Value => _fingerPrint.Value;
+
+        static byte[] RunQuery()
+        {
+            var helper = new WMIHelper("root\\CimV2");
+            var processors = helper.Query<Processor>().Select(x => x.ToString());
+            var baseBoards = helper.Query<BaseBoard>().Select(x => x.ToString());
+
+            var result = processors.Concat(baseBoards).Aggregate(">>", (current, next) => current + next);
+
+            return NativeMethods.GetBytes(result);
         }
     }
 }

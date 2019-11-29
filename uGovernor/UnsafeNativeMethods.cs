@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Vault
+namespace uGovernor
 {
     unsafe static class UnsafeNativeMethods
     {

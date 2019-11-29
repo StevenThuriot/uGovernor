@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
-using Vault;
-using static System.IO.Path;
+
 
 namespace uGovernor.Domain
 {
@@ -15,17 +15,23 @@ namespace uGovernor.Domain
         readonly string _path;
         IDictionary<string, SecureString> _settings;
 
-        public SettingsManger(string path)
+        public SettingsManger(string path, bool init = true)
         {
-            _path = IsPathRooted(path) 
-                    ? path 
-                    : Combine(AppDomain.CurrentDomain.BaseDirectory, path);
+            _path = path;
+            Trace.TraceInformation("Settings location: " + _path);
 
-            Refresh();
+            if (init)
+            {
+                Refresh();
+            }
+            else
+            {
+                _settings = new Dictionary<string, SecureString>();
+            }
         }
 
-        public SettingsManger()
-            : this("uGovernor.cfg")
+        public SettingsManger(bool init = true)
+            : this("uGovernor.cfg", init)
         {
         }
 
@@ -83,10 +89,17 @@ namespace uGovernor.Domain
         public void Refresh()
         {
             Trace.TraceInformation("Refreshing settings from file...");
-
             var password = FingerPrint.Value;
-            _settings = Security.DecryptFile(_path, password);
-            Array.Clear(password, 0, password.Length);
+
+            try
+            {
+                _settings = Security.DecryptFile(_path, password);
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError(e.ToString());
+                _settings = new Dictionary<string, SecureString>();
+            }
         }
 
 #if DEBUG

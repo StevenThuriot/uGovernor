@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using System.Web.Script.Serialization;
 
 namespace uGovernor.Domain
 {
@@ -21,14 +21,9 @@ namespace uGovernor.Domain
 
         internal Torrent(TorrentServer torrentServer, string hash, string name)
         {
-            if (torrentServer == null) throw new ArgumentNullException(nameof(torrentServer));
-            if (hash == null) throw new ArgumentNullException(nameof(hash));
-            if (name == null) throw new ArgumentNullException(nameof(name));
-
-
-            _server = torrentServer;
-            Hash = hash;
-            Name = name;
+            _server = torrentServer ?? throw new ArgumentNullException(nameof(torrentServer));
+            Hash = hash ?? throw new ArgumentNullException(nameof(hash));
+            Name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
         bool IKnowAboutProperties.PropertiesAreSet
@@ -88,9 +83,7 @@ namespace uGovernor.Domain
 
             */
             
-            var serializer = new JavaScriptSerializer();
-            var result = serializer.Deserialize<Dictionary<string, object>>(json);
-
+            var result = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
 
             result["trackers"] = result["trackers"].ToString().Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
             result["Private"] = result["dht"].Equals(-1) || result["pex"].Equals(-1);

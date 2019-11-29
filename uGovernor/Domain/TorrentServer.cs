@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,7 +8,6 @@ using System.Net;
 using System.Security;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Web.Script.Serialization;
 
 namespace uGovernor.Domain
 {
@@ -20,29 +20,26 @@ namespace uGovernor.Domain
         public Uri Host { get; }
 
         string _token;
-        JavaScriptSerializer _serializer;
-
+        
         string Token
         {
             get
             {
                 if (_token == null && _useTokenAuth)
                 {
-                    using (var client = CreateService())
+                    using var client = CreateService();
+                    var uri = new Uri(Host, "/gui/token.html");
+                    var answer = client.DownloadString(uri);
+
+                    var tokenRegex = new Regex("<div id=[\"']token['\"].*?>(?<token>.+)</div>", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.CultureInvariant);
+                    var match = tokenRegex.Match(answer);
+                    if (match.Success)
                     {
-                        var uri = new Uri(Host, "/gui/token.html");
-                        var answer = client.DownloadString(uri);
-                        
-                        var tokenRegex = new Regex("<div id=[\"']token['\"].*?>(?<token>.+)</div>", RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.CultureInvariant);
-                        var match = tokenRegex.Match(answer);
-                        if (match.Success)
-                        {
-                            _token = match.Groups["token"].Value;
-                        }
-                        else
-                        {
-                            throw new Exception("Unable to resolve token");
-                        }
+                        _token = match.Groups["token"].Value;
+                    }
+                    else
+                    {
+                        throw new Exception("Unable to resolve token");
                     }
                 }
 
@@ -52,16 +49,10 @@ namespace uGovernor.Domain
 
         public TorrentServer(Uri host, string username, SecureString password, bool useTokenAuth = true)
         {
-            if (host == null) throw new ArgumentNullException(nameof(host));
-            if (username == null) throw new ArgumentNullException(nameof(username));
-            if (password == null) throw new ArgumentNullException(nameof(password));
-
-            Host = host;
-            _username = username;
-            _password = password;
+            Host = host ?? throw new ArgumentNullException(nameof(host));
+            _username = username ?? throw new ArgumentNullException(nameof(username));
+            _password = password ?? throw new ArgumentNullException(nameof(password));
             _useTokenAuth = useTokenAuth;
-
-            _serializer = new JavaScriptSerializer();
         }
 
         public Torrent GetTorrent(string hash)
@@ -82,7 +73,8 @@ namespace uGovernor.Domain
         {
             var reply = Execute("list=1");
                         
-            var json = _serializer.Deserialize<Dictionary<string, object>>(reply);
+            var json = JsonConvert.DeserializeObject<Dictionary<string, object>>(reply);
+
             var torrents = ((ArrayList)json["torrents"])
                                         .Cast<ArrayList>()
                                         .Select(x => new Torrent(this, (string)x[0], (string)x[2]))
@@ -95,7 +87,7 @@ namespace uGovernor.Domain
         {
             var client = new WebClient();
             
-            client.Credentials = new NetworkCredential(_username, _password);
+            client.Credentials = new NetworkCredential(_username, _password.ToUnsecureString());
             return client;
         }
 
@@ -110,23 +102,21 @@ namespace uGovernor.Domain
             
             
             string reply;
-            using (var client = CreateService())
+            using var client = CreateService();
+            Trace.TraceInformation($"Calling server: {action}");
+
+            var uri = new Uri(Host, "/gui/?" + action);
+            try
             {
-                Trace.TraceInformation($"Calling server: {action}");
+                reply = client.DownloadString(uri);
+                Thread.Sleep(25); //Wait a bit so we don't hammer.
 
-                var uri = new Uri(Host, "/gui/?" + action);
-                try
-                {
-                    reply = client.DownloadString(uri);
-                    Thread.Sleep(25); //Wait a bit so we don't hammer.
-
-                    return reply;
-                }
-                catch (WebException)
-                {
-                    Trace.TraceError("Invalid request!");
-                    return "";
-                }
+                return reply;
+            }
+            catch (WebException)
+            {
+                Trace.TraceError("Invalid request!");
+                return "";
             }
         }
     }

@@ -27,8 +27,8 @@ namespace uGovernor.Domain
         -debug (appends tracing to debug.log)
         -ui (shows UI, will attach to parent if already in a console)
         -list
-        -listprivate
-        -listpublic
+        -list_ifprivate
+        -list_ifpublic
 
 
         -start[_ifprivate|_ifpublic]
@@ -43,6 +43,7 @@ namespace uGovernor.Domain
         -removeLabel[_ifprivate|_ifpublic]
         -setPrio[_ifprivate|_ifpublic] [VALUE]
         -setProperty[_ifprivate|_ifpublic] [NAME] [VALUE]
+        -move[_ifprivate|_ifpublic] [label] [sourceFolder] [destinationFolder] [file]
 
         -save [NAME] [VALUE] [NAME2] [VALUE2] .... [NAME_N] [VALUE_N] (currently used: user, password and host)
 
@@ -51,6 +52,8 @@ namespace uGovernor.Domain
         */
         public Governor(string[] args)
         {
+            var settings = new SettingsManger();
+
             bool useToken = true;
             Uri host = null;
             string user = null;
@@ -67,12 +70,13 @@ namespace uGovernor.Domain
                 if (!name.StartsWith("-", StringComparison.Ordinal)) continue; //not considered a command
 
                 name = name.Substring(1).Trim().ToUpperInvariant();
-                
+
                 switch (name)
                 {
                     case "HOST":
                         host = new Uri(args[++i]);
                         break;
+
                     case "USER":
                         user = args[++i];
                         break;
@@ -98,39 +102,44 @@ namespace uGovernor.Domain
                         break;
 
                     case "DEBUG":
-                        var writerListener = new TextWriterTraceListener(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "debug.log"));
+                        var writerListener = new TextWriterTraceListener(File.Open(Path.Combine("debug.log"), FileMode.OpenOrCreate));
                         writerListener.TraceOutputOptions |= TraceOptions.DateTime;
                         Trace.AutoFlush = true; //Otherwise nothing will be written to the file.
                         Trace.Listeners.Add(writerListener);
                         break;
 
-                    case "LIST":
-                        serverCommands.Add(new ListCommand(Execution.Always));
+                    default:
+                        if (name.StartsWith("LIST"))
+                        {
+                            serverCommands.Add(new ListCommand(ResolveExecutionType(name)));
+                        }
+                        else if (name.StartsWith("MOVE"))
+                        {
+                            string destinationFolder = settings.Get("DESTINATION");
+                            
+                            var moveCommand = new MoveCommand(destinationFolder: destinationFolder,
+                                                              execution: ResolveExecutionType(name),
+                                                              label: args[++i],
+                                                              sourceFolder: args[++i],
+                                                              file: args[++i]);
+
+                            actions.Add(moveCommand);
+                        }
+                        else
+                        {
+                            actions.Add(Command.Build(name, ref i, args));
+                        }
                         break;
 
-                    case "LISTPRIVATE":
-                        serverCommands.Add(new ListCommand(Execution.Private));
-                        break;
-
-                    case "LISTPUBLIC":
-                        serverCommands.Add(new ListCommand(Execution.Public));
-                        break;
 
                     case "UI":
                         //Ignore
                         break;
-
-
-                    default:
-                        actions.Add(Command.Build(name, ref i, args));
-                        break;
                 }
             }
-            
+
             if (user == null || password == null || host == null)
             {
-                var settings = new SettingsManger();
-
                 if (user == null) user = settings.Get("USER");
                 if (password == null) password = settings.GetSecure("PASSWORD");
                 if (host == null) host = settings.GetUri("HOST");
@@ -142,10 +151,31 @@ namespace uGovernor.Domain
             Hashes = hashes;
         }
 
+        private static Execution ResolveExecutionType(string action)
+        {
+            const string IFPRIVATE = "_IFPRIVATE";
+            const string IFPUBLIC = "_IFPUBLIC";
+
+            if (action.EndsWith(IFPRIVATE, StringComparison.OrdinalIgnoreCase))
+            {
+                return Execution.Private;
+            }
+            else if (action.EndsWith(IFPUBLIC, StringComparison.OrdinalIgnoreCase))
+            {
+                return Execution.Public;
+            }
+            else
+            {
+                return Execution.Always;
+            }
+        }
+
         public void Run()
         {
             if (!Actions.Any() && !ServerCommands.Any()) return; //Skip execution if no actions have been declared
 
+            foreach (var action in ServerCommands)
+                action.Run(Server);
 
             IEnumerable<Torrent> torrents;
 
@@ -169,9 +199,6 @@ namespace uGovernor.Domain
 
                 Thread.Sleep(125); //Don't hammer inbetween actions
             }
-
-            foreach (var action in ServerCommands)
-                action.Run(Server);
         }
     }
 }
