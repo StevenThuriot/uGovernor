@@ -43,7 +43,7 @@ namespace uGovernor.Domain
         -removeLabel[_ifprivate|_ifpublic]
         -setPrio[_ifprivate|_ifpublic] [VALUE]
         -setProperty[_ifprivate|_ifpublic] [NAME] [VALUE]
-        -move[_ifprivate|_ifpublic] [label] [sourceFolder] [destinationFolder] [file]
+        -move[_ifprivate|_ifpublic] [label] [sourceFolder] [file]
 
         -save [NAME] [VALUE] [NAME2] [VALUE2] .... [NAME_N] [VALUE_N] (currently used: user, password and host)
 

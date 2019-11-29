@@ -84,6 +84,9 @@ Unpause the torrent
 ## -recheck[_ifprivate|_ifpublic]
 Recheck the torrent
 
+## -move[_ifprivate|_ifpublic] [LABEL] [DOWNLOADFOLDER] [FILE]
+Moves the torrent downloaded files to saved destination folder ( using the -save command )
+
 ## -remove[_ifprivate|_ifpublic]
 Remove the torrent from the list. This will use your default removal setting.
 
@@ -104,7 +107,12 @@ A sort of catch all command. When wanting to set any property, e.g. download pat
 
 ## -save [NAME] [VALUE] [NAME2] [VALUE2] .... [NAME_N] [VALUE_N]
 Securely saves the passed values to a file.
-Currently, only user, password and host are used.
+Currently the following keys are used:
+
+- user
+- password 
+- host 
+- destination
 
 When adding or changing a property, it is not needed to supply all the previously saved (unaltered) properties again. If the property already existed in the file, it will be overridden, if not, it will be added. If you want a certain property deleted, you'll have to fully recreate the `cfg` file.
 
