@@ -4,8 +4,10 @@ using System.Management;
 
 namespace uGovernor
 {
-    static class FingerPrint
+    class FingerPrint : IFingerPrint
     {
+        public byte[] Get() => NativeMethods.GetBytes(_fingerPrint.Value);
+
         static Lazy<string> _fingerPrint = new Lazy<string>(() =>
         {
             const string CPUQry = "SELECT UniqueId, ProcessorId, Name, Description, Manufacturer FROM Win32_Processor";
@@ -13,8 +15,6 @@ namespace uGovernor
 
             return $"{RunQuery(CPUQry, MoboQry)}";
         });
-
-        public static byte[] Value => NativeMethods.GetBytes(_fingerPrint.Value);
 
         static string RunQuery(params string[] queries)
         {

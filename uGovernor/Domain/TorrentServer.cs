@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
+
 using System.Linq;
 using System.Net;
 using System.Security;
@@ -20,6 +21,7 @@ namespace uGovernor.Domain
         public Uri Host { get; }
 
         string _token;
+        private readonly ILogger<TorrentServer> _logger;
 
         string Token
         {
@@ -47,12 +49,13 @@ namespace uGovernor.Domain
             }
         }
 
-        public TorrentServer(Uri host, string username, SecureString password, bool useTokenAuth = true)
+        public TorrentServer(Uri host, string username, SecureString password, bool useTokenAuth, ILogger<TorrentServer> logger)
         {
             Host = host ?? throw new ArgumentNullException(nameof(host));
             _username = username ?? throw new ArgumentNullException(nameof(username));
             _password = password ?? throw new ArgumentNullException(nameof(password));
             _useTokenAuth = useTokenAuth;
+            _logger = logger;
         }
 
         public Torrent GetTorrent(string hash)
@@ -86,10 +89,10 @@ namespace uGovernor.Domain
 
         WebClient CreateService()
         {
-            var client = new WebClient();
-
-            client.Credentials = new NetworkCredential(_username, _password.ToUnsecureString());
-            return client;
+            return new WebClient
+            {
+                Credentials = new NetworkCredential(_username, _password.ToUnsecureString())
+            };
         }
 
 
@@ -104,7 +107,7 @@ namespace uGovernor.Domain
 
             string reply;
             using var client = CreateService();
-            Trace.TraceInformation($"Calling server: {action}");
+            _logger.LogInformation($"Calling server: {action}");
 
             var uri = new Uri(Host, "/gui/?" + action);
             try
@@ -116,7 +119,7 @@ namespace uGovernor.Domain
             }
             catch (WebException)
             {
-                Trace.TraceError("Invalid request!");
+                _logger.LogError("Invalid request!");
                 return "";
             }
         }

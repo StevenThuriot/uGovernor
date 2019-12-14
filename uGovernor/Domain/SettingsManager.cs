@@ -1,43 +1,49 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Security;
 
 
 namespace uGovernor.Domain
 {
-    class SettingsManger
+    class SettingsManger : ISettingsManger
+
 #if DEBUG
         : IEnumerable<string>
 #endif
     {
-        readonly string _path;
+        readonly string _path = "uGovernor.cfg";
+
+        private readonly IFingerPrint _fingerPrint;
+        private readonly ILogger<SettingsManger> _logger;
+
         IDictionary<string, SecureString> _settings;
+        private readonly ISecurity _security;
 
-        public SettingsManger(string path, bool init = true)
+        IDictionary<string, SecureString> Settings
         {
-            _path = path;
-            Trace.TraceInformation("Settings location: " + _path);
+            get
+            {
+                if (_settings is null)
+                {
+                    Refresh();
+                }
 
-            if (init)
-            {
-                Refresh();
-            }
-            else
-            {
-                _settings = new Dictionary<string, SecureString>();
+                return _settings;
             }
         }
 
-        public SettingsManger(bool init = true)
-            : this("uGovernor.cfg", init)
+        public SettingsManger(ISecurity security, IFingerPrint fingerPrint, ILogger<SettingsManger> logger)
         {
+            _fingerPrint = fingerPrint;
+            _logger = logger;
+            _security = security;
         }
 
         public string Get(string setting)
         {
             SecureString value;
-            if (_settings.TryGetValue(setting, out value))
+            if (Settings.TryGetValue(setting, out value))
             {
                 return value.ToUnsecureString();
             }
@@ -48,7 +54,7 @@ namespace uGovernor.Domain
         public SecureString GetSecure(string setting)
         {
             SecureString value;
-            if (_settings.TryGetValue(setting, out value))
+            if (Settings.TryGetValue(setting, out value))
             {
                 return value;
             }
@@ -66,7 +72,7 @@ namespace uGovernor.Domain
 
         public void Set(string setting, string value)
         {
-            _settings[setting] = value.ToSecureString();
+            Settings[setting] = value.ToSecureString();
         }
 
         public void Set(string setting, SecureString value)
@@ -81,22 +87,22 @@ namespace uGovernor.Domain
 
         public void Save()
         {
-            Trace.TraceInformation("Saving settings to file...");
-            Security.EncryptFile(_settings, _path, FingerPrint.Value);
+            _logger.LogInformation("Saving settings to file...");
+            _security.EncryptFile(Settings, _path, _fingerPrint.Get());
         }
 
         public void Refresh()
         {
-            Trace.TraceInformation("Refreshing settings from file...");
-            var password = FingerPrint.Value;
+            _logger.LogInformation("Refreshing settings from file...");
+            var password = _fingerPrint.Get();
 
             try
             {
-                _settings = Security.DecryptFile(_path, password);
+                _settings = _security.DecryptFile(_path, password);
             }
             catch (Exception e)
             {
-                Trace.TraceError(e.ToString());
+                _logger.LogError(e.ToString());
                 _settings = new Dictionary<string, SecureString>();
             }
         }

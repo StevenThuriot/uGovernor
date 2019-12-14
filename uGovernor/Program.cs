@@ -1,12 +1,14 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using NReco.Logging.File;
+using System;
 using System.Linq;
 using uGovernor.Domain;
 
 namespace uGovernor
 {
-    public static class Program
+    public class Program
     {
         public static void Main(string[] args)
         {
@@ -15,37 +17,29 @@ namespace uGovernor
                 args = new[] { "-ui", "-list" };
             }
 
-            if (args.Contains("-debug", StringComparer.OrdinalIgnoreCase))
+            bool includeDebug = args.Contains("-debug", StringComparer.OrdinalIgnoreCase);
+            bool showUI = args.Contains("-ui", StringComparer.OrdinalIgnoreCase);
+
+            if (includeDebug)
             {
-                var writerListener = new TextWriterTraceListener(File.Open(Path.Combine("debug.log"), FileMode.Append));
-                writerListener.TraceOutputOptions |= TraceOptions.DateTime;
-                Trace.AutoFlush = true; //Otherwise nothing will be written to the file.
-                Trace.Listeners.Add(writerListener);
-
                 args = args.Except(new[] { "-debug" }, StringComparer.OrdinalIgnoreCase).ToArray();
-
-                Trace.TraceInformation("Attached debug log");
             }
 
-            if (args.Contains("-ui", StringComparer.OrdinalIgnoreCase))
+            if (showUI)
             {
                 args = args.Except(new[] { "-ui" }, StringComparer.OrdinalIgnoreCase).ToArray();
-
-                var consoleListener = new ConsoleTraceListener();
-                consoleListener.TraceOutputOptions |= TraceOptions.DateTime | TraceOptions.Timestamp;
-
-                Trace.Listeners.Add(consoleListener);
-
-                Trace.TraceInformation("Attached console log");
             }
 
-            Trace.TraceInformation(string.Join("~", args));
+            var provider = ResolveServiceProvider(args, includeDebug, showUI);
+            var logger = provider.GetService<ILogger<Program>>();
+
+            logger.LogInformation(string.Join("~", args));
 
             try
             {
                 if (args.Contains("-SAVE", StringComparer.OrdinalIgnoreCase))
                 {
-                    var settings = new SettingsManger(init: false);
+                    var settings = provider.GetService<ISettingsManger>();
 
                     var commands = args.Where(x => !StringComparer.OrdinalIgnoreCase.Equals(x, "-SAVE"))
                                        .Select((x, i) => i % 2 == 0 ? x.TrimStart('-').ToUpperInvariant() : x)
@@ -54,28 +48,52 @@ namespace uGovernor
                     for (int i = 0; i < commands.Length; i++)
                         settings.Set(commands[i], commands[++i]);
 
-                    Trace.TraceInformation("Saving settings...");
+                    logger.LogInformation("Saving settings...");
                     settings.Save();
                 }
                 else
                 {
-                    var governor = new Governor(args);
-                    governor.Run();
+                    provider.GetService<IGovernor>().Run();
                 }
             }
             catch (Exception e)
             {
-                Trace.TraceError(string.Format("{0}{0}{1}{0}", Environment.NewLine, e));
+                logger.LogError(string.Format("{0}{0}{1}{0}", Environment.NewLine, e));
             }
             finally
             {
-                Trace.TraceInformation("Shutting down\n\n=============================\n\n");
-
-                foreach (var disposable in Trace.Listeners.OfType<IDisposable>())
-                {
-                    disposable.Dispose();
-                }
+                logger.LogInformation("Shutting down\n\n=============================\n\n");
             }
+        }
+
+        private static ServiceProvider ResolveServiceProvider(string[] args, bool debug, bool ui)
+        {
+            var logLevel = debug ? LogLevel.Debug : LogLevel.Information;
+            var serviceProvider = new ServiceCollection()
+                                        .AddLogging(x =>
+                                        {
+                                            if (ui)
+                                            {
+                                                x.AddConsole(c =>
+                                                 {
+                                                     c.Format = ConsoleLoggerFormat.Systemd;
+                                                     c.LogToStandardErrorThreshold = logLevel;
+                                                 });
+                                            }
+
+                                            if (debug)
+                                            {
+                                                x.AddProvider(new FileLoggerProvider("debug.log"));
+                                            }
+                                        })
+                                        .AddSingleton<ISecurity, Security>()
+                                        .AddSingleton<IFingerPrint, FingerPrint>()
+                                        .AddSingleton<ISettingsManger, SettingsManger>()
+                                        .AddSingleton<IGovernor, Governor>()
+                                        .AddSingleton<IArguments>(new Arguments(args))
+                                        .BuildServiceProvider();
+
+            return serviceProvider;
         }
     }
 }

@@ -1,27 +1,30 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+
 using uGovernor.Domain;
 
 namespace uGovernor.Commands
 {
-    class Command
+    class Command : ICommand
     {
         public string Action { get; }
         public IReadOnlyList<string> Arguments { get; }
         public Execution ExecutionLevel { get; }
 
-        public Command(string command, IReadOnlyList<string> arguments, Execution executionLevel)
+        public Command(string command, IReadOnlyList<string> arguments, Execution executionLevel, ILogger<Command> logger)
         {
             Action = command;
             Arguments = arguments;
             ExecutionLevel = executionLevel;
+            _logger = logger;
         }
 
         const string IFPRIVATE = "_IFPRIVATE";
         const string IFPUBLIC = "_IFPUBLIC";
+        private readonly ILogger<Command> _logger;
 
-        internal static Command Build(string action, ref int i, string[] args)
+        internal static Command Build(string action, ref int i, IArguments args, ILogger<Command> logger)
         {
             string command;
             var arguments = new List<string>();
@@ -43,7 +46,7 @@ namespace uGovernor.Commands
                 execution = Execution.Always;
             }
 
-            while (args.Length > i + 1)
+            while (args.Count > i + 1)
             {
                 var argument = args[i + 1];
                 if (argument.StartsWith("-", StringComparison.Ordinal)) break; //not an argument but the next command
@@ -54,13 +57,13 @@ namespace uGovernor.Commands
             }
 
 
-            return new Command(command, arguments, execution);
+            return new Command(command, arguments, execution, logger);
         }
 
 
-        public virtual void Run(Torrent torrent)
+        public void Run(Torrent torrent)
         {
-            Trace.TraceInformation($"Running action {Action}...");
+            _logger.LogInformation($"Running action {Action}...");
 
             switch (Action)
             {
@@ -113,7 +116,7 @@ namespace uGovernor.Commands
                     break;
 
                 default:
-                    Trace.TraceError($"Unknown action: {Action}");
+                    _logger.LogError($"Unknown action: {Action}");
                     break;
             }
         }

@@ -1,19 +1,21 @@
-﻿using System;
-using System.Diagnostics;
+﻿using Microsoft.Extensions.Logging;
+using System;
+
 using System.IO;
 using System.Linq;
 using uGovernor.Domain;
 
 namespace uGovernor.Commands
 {
-    class MoveCommand : Command
+    class MoveCommand : ICommand
     {
         private readonly string _sourceFolder;
         private readonly string _file;
         private readonly string _destinationFolder;
+        private readonly ILogger<MoveCommand> _logger;
+        private readonly Execution _executionLevel;
 
-        public MoveCommand(string label, string sourceFolder, string destinationFolder, string file, Execution execution)
-            : base(null, null, execution)
+        public MoveCommand(string label, string sourceFolder, string destinationFolder, string file, Execution execution, ILogger<MoveCommand> logger)
         {
             _sourceFolder = sourceFolder ?? throw new ArgumentNullException(nameof(sourceFolder));
             _destinationFolder = destinationFolder;
@@ -32,6 +34,8 @@ namespace uGovernor.Commands
             }
 
             _file = file;
+            _logger = logger;
+            _executionLevel = execution;
         }
 
         enum Seasons
@@ -55,14 +59,14 @@ namespace uGovernor.Commands
             return Seasons.Autumn;
         }
 
-        public override void Run(Torrent torrent)
+        public void Run(Torrent torrent)
         {
-            Trace.TraceInformation($"Running action Move...");
+            _logger.LogInformation($"Running action Move...");
 
             if (_destinationFolder is null)
                 return;
 
-            if (!torrent.CanExecute(ExecutionLevel))
+            if (!torrent.CanExecute(_executionLevel))
                 return;
 
             if (string.IsNullOrEmpty(_file))

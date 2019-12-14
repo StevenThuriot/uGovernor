@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+
 using System.Linq;
 using System.Security;
 using System.Threading;
@@ -8,12 +9,14 @@ using uGovernor.Commands;
 
 namespace uGovernor.Domain
 {
-    class Governor
+    class Governor : IGovernor
     {
         public TorrentServer Server { get; }
-        public IEnumerable<Command> Actions { get; }
+        public IEnumerable<ICommand> Actions { get; }
         public IEnumerable<IServerCommand> ServerCommands { get; }
         public IEnumerable<string> Hashes { get; }
+
+        private readonly ILogger<Governor> _logger;
 
         /*
         -host [VALUE]
@@ -50,20 +53,20 @@ namespace uGovernor.Domain
         -add [HASH](uses magnet)
         -addResolved [HASH] (uses torcache)
         */
-        public Governor(string[] args)
+        public Governor(ISettingsManger settings, IArguments args, ILogger<Governor> logger, ILogger<AddCommand> addLogger, ILogger<ListCommand> listLogger, ILogger<MoveCommand> moveLogger, ILogger<Command> commandLogger, ILogger<TorrentServer> serverLogger)
         {
-            var settings = new SettingsManger();
+            _logger = logger;
 
             bool useToken = true;
             Uri host = null;
             string user = null;
             SecureString password = null;
-            var actions = new List<Command>();
+            var actions = new List<ICommand>();
             var hashes = new List<string>();
 
             var serverCommands = new List<IServerCommand>();
 
-            for (int i = 0; i < args.Length; i++)
+            for (int i = 0; i < args.Count; i++)
             {
                 var name = args[i];
 
@@ -94,17 +97,17 @@ namespace uGovernor.Domain
                         break;
 
                     case "ADD":
-                        serverCommands.Add(new AddCommand(args[++i], true));
+                        serverCommands.Add(new AddCommand(args[++i], true, addLogger));
                         break;
 
                     case "ADDRESOLVED":
-                        serverCommands.Add(new AddCommand(args[++i], false));
+                        serverCommands.Add(new AddCommand(args[++i], false, addLogger));
                         break;
 
                     default:
                         if (name.StartsWith("LIST"))
                         {
-                            serverCommands.Add(new ListCommand(ResolveExecutionType(name)));
+                            serverCommands.Add(new ListCommand(ResolveExecutionType(name), listLogger));
                         }
                         else if (name.StartsWith("MOVE"))
                         {
@@ -114,13 +117,14 @@ namespace uGovernor.Domain
                                                               execution: ResolveExecutionType(name),
                                                               label: args[++i],
                                                               sourceFolder: args[++i],
-                                                              file: args[++i]);
+                                                              file: args[++i],
+                                                              logger: moveLogger);
 
                             actions.Add(moveCommand);
                         }
                         else
                         {
-                            actions.Add(Command.Build(name, ref i, args));
+                            actions.Add(Command.Build(name, ref i, args, commandLogger));
                         }
                         break;
                 }
@@ -133,7 +137,7 @@ namespace uGovernor.Domain
                 if (host == null) host = settings.GetUri("HOST");
             }
 
-            Server = new TorrentServer(host, user, password, useToken);
+            Server = new TorrentServer(host, user, password, useToken, serverLogger);
             ServerCommands = serverCommands;
             Actions = actions;
             Hashes = hashes;
@@ -173,9 +177,9 @@ namespace uGovernor.Domain
             }
             else
             {
-                Trace.TraceInformation("Retreiving all torrents;");
+                _logger.LogInformation("Retreiving all torrents;");
                 torrents = Server.GetAllTorrents();
-                Trace.TraceInformation($"Retrieved {torrents.Count()} torrents;");
+                _logger.LogInformation($"Retrieved {torrents.Count()} torrents;");
             }
 
             var torrentGroups = torrents.GroupPer(30).Select(hashes => new MultiTorrent(Server, hashes)).ToArray();

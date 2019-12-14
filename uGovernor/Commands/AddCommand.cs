@@ -1,5 +1,6 @@
-﻿using System;
-using System.Diagnostics;
+﻿using Microsoft.Extensions.Logging;
+using System;
+
 using uGovernor.Domain;
 
 namespace uGovernor.Commands
@@ -8,11 +9,13 @@ namespace uGovernor.Commands
     {
         string _hash;
         bool _useMagnet;
+        private readonly ILogger<AddCommand> _logger;
 
-        public AddCommand(string hash, bool useMagnet)
+        public AddCommand(string hash, bool useMagnet, ILogger<AddCommand> logger)
         {
             _hash = hash ?? throw new ArgumentNullException(nameof(hash));
             _useMagnet = useMagnet;
+            _logger = logger;
         }
 
         public void Run(TorrentServer server)
@@ -27,7 +30,7 @@ namespace uGovernor.Commands
                 torrentUrl = $"http://torcache.net/torrent/{_hash}.torrent";
             }
 
-            Trace.TraceInformation($"Adding Torrent: {_hash}");
+            _logger.LogInformation($"Adding Torrent: {_hash}");
             server.ExecuteAction($"add-url&s={torrentUrl}");
         }
 

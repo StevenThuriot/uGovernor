@@ -1,16 +1,18 @@
-﻿using System.Linq;
+﻿using Microsoft.Extensions.Logging;
+using System.Linq;
 using uGovernor.Domain;
-using static System.Console;
 
 namespace uGovernor.Commands
 {
     class ListCommand : IServerCommand
     {
         readonly Execution _executionLevel;
+        private readonly ILogger<ListCommand> _logger;
 
-        public ListCommand(Execution executionLevel)
+        public ListCommand(Execution executionLevel, ILogger<ListCommand> logger)
         {
             _executionLevel = executionLevel;
+            _logger = logger;
         }
 
         public void Run(TorrentServer server)
@@ -28,11 +30,9 @@ namespace uGovernor.Commands
                     break;
             }
 
-            WriteLine("");
-
             if (!torrents.Any())
             {
-                WriteLine("No relevant torrents found...");
+                _logger.LogInformation("No relevant torrents found...");
                 return;
             }
 
@@ -42,21 +42,13 @@ namespace uGovernor.Commands
             var alignment = " | {0,-" + longestName + "}";
 
 
-            WriteLine(" ♦");
-            WriteLine(" | Listing torrents...");
+            _logger.LogInformation(" ♦");
+            _logger.LogInformation(" | Listing torrents...");
 
             var line = " ♦" + new string('-', longestName + hashLength + 5) + "♦";
-            WriteLine(line);
-
-            foreach (var torrent in torrents)
-            {
-                Write(string.Format(alignment, torrent.Name));
-                Write(" : ");
-                Write(torrent.Hash);
-                WriteLine(" |");
-            }
-
-            WriteLine(line);
+            _logger.LogInformation(line);
+            _logger.LogInformation(string.Join(" |", torrents.Select(torrent => $"{string.Format(alignment, torrent.Name)} : {torrent.Hash}")));
+            _logger.LogInformation(line);
         }
     }
 }

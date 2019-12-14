@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace uGovernor
 {
-    public unsafe static class Security
+    public unsafe class Security : ISecurity
     {
         // This constant is used to determine the keysize of the encryption algorithm in bits.
         // We divide this by 8 within the code below to get the equivalent number of bytes.
@@ -83,7 +83,7 @@ namespace uGovernor
             return randomBytes;
         }
 
-        public static void EncryptFile(IDictionary<string, SecureString> settings, string path, byte[] password)
+        public void EncryptFile(IDictionary<string, SecureString> settings, string path, byte[] password)
         {
             var dictionary = settings.ToDictionary(x => x.Key, x => x.Value.ToUnsecureString(), StringComparer.OrdinalIgnoreCase);
             var serialized = JsonSerializer.Serialize(dictionary);
@@ -92,7 +92,7 @@ namespace uGovernor
             File.WriteAllText(path, encrypted);
         }
 
-        public static IDictionary<string, SecureString> DecryptFile(string path, byte[] password)
+        public IDictionary<string, SecureString> DecryptFile(string path, byte[] password)
         {
             var encrypted = File.ReadAllText(path);
             var decrypted = Decrypt(encrypted, password);
