@@ -86,6 +86,12 @@ Recheck the torrent
 
 ## -move[_ifprivate|_ifpublic] [LABEL] [DOWNLOADFOLDER] [FILE]
 Moves the torrent downloaded files to saved destination folder ( using the -save command )
+Available placeholders:
+- %label%
+- %year%
+- %month%
+- %season%
+- %seasonnr%
 
 ## -remove[_ifprivate|_ifpublic]
 Remove the torrent from the list. This will use your default removal setting.

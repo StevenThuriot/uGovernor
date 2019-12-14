@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using uGovernor.Domain;
 
 namespace uGovernor.Commands
@@ -19,14 +18,41 @@ namespace uGovernor.Commands
             _sourceFolder = sourceFolder ?? throw new ArgumentNullException(nameof(sourceFolder));
             _destinationFolder = destinationFolder;
 
-            if (destinationFolder != null && label != null)
+            if (destinationFolder != null)
             {
-                _destinationFolder = Regex.Replace(_destinationFolder, "%label%", label, RegexOptions.IgnoreCase);
-                _destinationFolder = Regex.Replace(_destinationFolder, "%year%", DateTime.Now.Year.ToString(), RegexOptions.IgnoreCase);
-                _destinationFolder = Regex.Replace(_destinationFolder, "%month%", DateTime.Now.Month.ToString("D2"), RegexOptions.IgnoreCase);
+                var now = DateTime.Now;
+
+                var season = ResolveSeason(now);
+
+                _destinationFolder = _destinationFolder.Replace("%label%", label, StringComparison.OrdinalIgnoreCase)
+                                                       .Replace("%year%", now.Year.ToString(), StringComparison.OrdinalIgnoreCase)
+                                                       .Replace("%month%", now.Month.ToString("D2"), StringComparison.OrdinalIgnoreCase)
+                                                       .Replace("%season%", season.ToString(), StringComparison.OrdinalIgnoreCase)
+                                                       .Replace("%seasonnr%", ((int)season).ToString(), StringComparison.OrdinalIgnoreCase);
             }
 
             _file = file;
+        }
+
+        enum Seasons
+        {
+            Spring = 1,
+            Summer = 2,
+            Autumn = 3,
+            Winter = 4
+        }
+
+        private static Seasons ResolveSeason(DateTime date)
+        {
+            int doy = date.DayOfYear - Convert.ToInt32((DateTime.IsLeapYear(date.Year)) && date.DayOfYear > 59);
+
+            if (doy < 80 || doy >= 355) return Seasons.Winter;
+
+            if (doy >= 80 && doy < 172) return Seasons.Spring;
+
+            if (doy >= 172 && doy < 266) return Seasons.Summer;
+
+            return Seasons.Autumn;
         }
 
         public override void Run(Torrent torrent)
