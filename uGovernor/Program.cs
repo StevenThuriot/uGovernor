@@ -17,7 +17,7 @@ namespace uGovernor
 
             if (args.Contains("-debug", StringComparer.OrdinalIgnoreCase))
             {
-                var writerListener = new TextWriterTraceListener(File.Open(Path.Combine("debug.log"), FileMode.OpenOrCreate));
+                var writerListener = new TextWriterTraceListener(File.Open(Path.Combine("debug.log"), FileMode.Append));
                 writerListener.TraceOutputOptions |= TraceOptions.DateTime;
                 Trace.AutoFlush = true; //Otherwise nothing will be written to the file.
                 Trace.Listeners.Add(writerListener);
@@ -69,6 +69,8 @@ namespace uGovernor
             }
             finally
             {
+                Trace.TraceInformation("Shutting down\n\n=============================\n\n");
+
                 foreach (var disposable in Trace.Listeners.OfType<IDisposable>())
                 {
                     disposable.Dispose();

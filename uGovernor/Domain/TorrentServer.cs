@@ -75,10 +75,11 @@ namespace uGovernor.Domain
 
             var json = JsonSerializer.Deserialize<Dictionary<string, object>>(reply);
 
-            var torrents = ((ArrayList)json["torrents"])
-                                        .Cast<ArrayList>()
-                                        .Select(x => new Torrent(this, (string)x[0], (string)x[2]))
-                                        .ToArray();
+            var jsonTorrents = ((JsonElement)json["torrents"]);
+
+            var torrents = jsonTorrents.EnumerateArray()
+                                       .Select(x => new Torrent(this, x[0].GetString(), x[2].GetString()))
+                                       .ToArray();
 
             return torrents;
         }
