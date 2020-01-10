@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using uGovernor.Domain;
@@ -26,9 +26,12 @@ namespace uGovernor.Commands
 
                 var season = ResolveSeason(now);
 
+                //I:\.New\.Governor\.%label%\%year%\%month%
+                //I:\.New\.Governor\.%label%\%year%\%seasonnr% - %season%\%month% - %monthName%
                 _destinationFolder = _destinationFolder.Replace("%label%", label, StringComparison.OrdinalIgnoreCase)
                                                        .Replace("%year%", now.Year.ToString(), StringComparison.OrdinalIgnoreCase)
                                                        .Replace("%month%", now.Month.ToString("D2"), StringComparison.OrdinalIgnoreCase)
+                                                       .Replace("%monthName%", now.ToString("MMMM", CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase)
                                                        .Replace("%season%", season.ToString(), StringComparison.OrdinalIgnoreCase)
                                                        .Replace("%seasonnr%", ((int)season).ToString(), StringComparison.OrdinalIgnoreCase);
             }
