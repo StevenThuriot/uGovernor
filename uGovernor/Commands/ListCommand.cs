@@ -47,8 +47,12 @@ namespace uGovernor.Commands
 
             var line = " ♦" + new string('-', longestName + hashLength + 5) + "♦";
             _logger.LogInformation(line);
-            _logger.LogInformation(string.Join(" |", torrents.Select(torrent => $"{string.Format(alignment, torrent.Name)} : {torrent.Hash}")));
-            _logger.LogInformation(line);
+
+            foreach (var torrent in torrents)
+            {
+                _logger.LogInformation($"{string.Format(alignment, torrent.Name)} : {torrent.Hash} |");
+                _logger.LogInformation(line);
+            }
         }
     }
 }
